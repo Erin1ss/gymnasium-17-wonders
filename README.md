@@ -39,7 +39,7 @@ npm run preview
 
 ## Публикация
 
-Для проекта GitHub Pages в `vite.config.ts` задан путь `/gymnasium-17-wonders/`. Workflow на `main` выполняет lint, тесты, production build и deployment. Требуется включить Pages с источником GitHub Actions в настройках репозитория. Сайт считается опубликованным только после зелёного workflow и проверки URL.
+Сайт опубликован на [GitHub Pages](https://erin1ss.github.io/gymnasium-17-wonders/); исходники находятся в [публичном репозитории](https://github.com/Erin1ss/gymnasium-17-wonders). В `vite.config.ts` задан путь `/gymnasium-17-wonders/`. Workflow на `main` выполняет lint, тесты, production build и deployment.
 
 ## Источники и авторство
 

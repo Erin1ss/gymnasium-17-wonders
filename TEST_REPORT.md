@@ -8,7 +8,7 @@
 - `npm test` — успешно: 2 набора проверок подтверждают точный порядок 17 ценностей, уникальность идентификаторов, 150–300 слов в каждой истории, наличие места, объяснения и задания, а также правильность решений всех 17 заданий.
 - `npm run build` — успешно: TypeScript проходит строгую проверку; Vite собрал production-версию с базовым путём `/gymnasium-17-wonders/`. JS — 317,58 КБ (97,84 КБ gzip), CSS — 29,75 КБ (7,58 КБ gzip).
 - `npm run prepare:favicon` — создал PNG/ICO-совместимый фавикон.
-- `npm run prepare:poster` — создал QR-макет для планируемого адреса `https://erin1ss.github.io/gymnasium-17-wonders/`. Адрес пока не опубликован; перед печатью QR-код необходимо проверить на телефоне после запуска сайта.
+- `npm run prepare:poster` — создал QR-макет для `https://erin1ss.github.io/gymnasium-17-wonders/`; страница открывается на опубликованном сайте. Перед печатью ватмана QR-код следует просканировать телефоном.
 - `npm run optimize:images` — выполнен; в `photos/approved` пока нет фотографий, поэтому пользовательские снимки в сборку не копировались.
 
 ## Проверка в браузере
@@ -32,7 +32,7 @@
 
 ## Публикация
 
-Workflow GitHub Actions подготовлен в `.github/workflows/deploy.yml`: lint, тесты, production build, загрузка Pages-артефакта и deploy. Локально созданная версия собрана и проверена, но GitHub-репозиторий и Pages ещё не созданы, workflow не запускался, а публичный URL не проверен. Перед созданием публичного репозитория требуется отдельное подтверждение пользователя на публикацию исходников и школьного проекта.
+Публичный репозиторий: [Erin1ss/gymnasium-17-wonders](https://github.com/Erin1ss/gymnasium-17-wonders). Сайт: [erin1ss.github.io/gymnasium-17-wonders](https://erin1ss.github.io/gymnasium-17-wonders/). GitHub Actions workflow [run #1](https://github.com/Erin1ss/gymnasium-17-wonders/actions/runs/41456227096) завершился успешно: lint, тесты, production build, загрузка Pages-артефакта и deployment. Живая главная страница открыта в браузере Codex и показывает вступление, навигацию и счётчик 0 из 17.
 
 ## Визуальная сверка
 
