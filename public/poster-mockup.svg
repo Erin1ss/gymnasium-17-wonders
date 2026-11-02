@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1700 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Образец ручной стенгазеты «Гимназия 122 — город 17 чудес»</title>
+  <desc id="desc">Композиционный макет горизонтального ватмана 85 на 60 сантиметров. Три зоны для фотографий и QR-код являются примером, а не готовой стенгазетой.</desc>
+  <defs>
+    <linearGradient id="paper" x2="0" y2="1"><stop stop-color="#f4ead5"/><stop offset="1" stop-color="#e8d8b9"/></linearGradient>
+    <linearGradient id="river" x2="0" y2="1"><stop stop-color="#8fb7ac"/><stop offset="1" stop-color="#4e8180"/></linearGradient>
+    <pattern id="grain" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="5" cy="8" r=".8" fill="#846f50" opacity=".09"/><circle cx="21" cy="18" r=".7" fill="#846f50" opacity=".08"/></pattern>
+    <style>
+      .serif{font-family:Georgia,'Times New Roman',serif}.sans{font-family:Arial,sans-serif}.hand{font-family:'Comic Sans MS','Segoe Print',cursive}
+      .ink{fill:#17303b}.muted{fill:#536b68}.gold{fill:#b87939}.line{stroke:#b87939;stroke-opacity:.45}
+    </style>
+  </defs>
+  <rect width="1700" height="1200" fill="url(#paper)"/><rect width="1700" height="1200" fill="url(#grain)"/>
+  <rect x="35" y="35" width="1630" height="1130" rx="9" fill="none" stroke="#31545a" stroke-width="4"/><rect x="48" y="48" width="1604" height="1104" rx="6" fill="none" stroke="#b87939" stroke-width="1.5"/>
+  <path d="M84 86h1532" class="line" stroke-width="2"/><path d="M84 225h1532" class="line" stroke-width="2"/>
+  <text x="850" y="135" text-anchor="middle" class="serif ink" font-size="51" letter-spacing="1">Гимназия 122 — город 17 чудес</text>
+  <text x="850" y="184" text-anchor="middle" class="hand gold" font-size="27">Мечтай! Действуй! Россия начинается с нас</text>
+  <text x="850" y="211" text-anchor="middle" class="sans muted" font-size="15">Однажды гимназия стала волшебным городом. Семнадцать огней начали гаснуть — 9А отправляется вернуть свет поступками.</text>
+
+  <g transform="translate(82 270)">
+    <text x="0" y="0" class="serif ink" font-size="22">17 чудес города</text>
+    <g class="sans ink" font-size="16">
+      <text x="0" y="43"><tspan class="gold">01</tspan><tspan dx="12">Жизнь</tspan></text><text x="0" y="83"><tspan class="gold">02</tspan><tspan dx="12">Достоинство</tspan></text><text x="0" y="123"><tspan class="gold">03</tspan><tspan dx="12">Права и свободы человека</tspan></text><text x="0" y="163"><tspan class="gold">04</tspan><tspan dx="12">Патриотизм</tspan></text><text x="0" y="203"><tspan class="gold">05</tspan><tspan dx="12">Гражданственность</tspan></text><text x="0" y="243"><tspan class="gold">06</tspan><tspan dx="12">Служение Отечеству</tspan></text><text x="0" y="283"><tspan class="gold">07</tspan><tspan dx="12">Высокие нравственные идеалы</tspan></text><text x="0" y="323"><tspan class="gold">08</tspan><tspan dx="12">Крепкая семья</tspan></text><text x="0" y="363"><tspan class="gold">09</tspan><tspan dx="12">Созидательный труд</tspan></text>
+      <text x="1195" y="43"><tspan class="gold">10</tspan><tspan dx="12">Приоритет духовного над материальным</tspan></text><text x="1195" y="83"><tspan class="gold">11</tspan><tspan dx="12">Гуманизм</tspan></text><text x="1195" y="123"><tspan class="gold">12</tspan><tspan dx="12">Милосердие</tspan></text><text x="1195" y="163"><tspan class="gold">13</tspan><tspan dx="12">Справедливость</tspan></text><text x="1195" y="203"><tspan class="gold">14</tspan><tspan dx="12">Коллективизм</tspan></text><text x="1195" y="243"><tspan class="gold">15</tspan><tspan dx="12">Взаимопомощь и взаимоуважение</tspan></text><text x="1195" y="283"><tspan class="gold">16</tspan><tspan dx="12">Историческая память и преемственность</tspan></text><text x="1195" y="323"><tspan class="gold">17</tspan><tspan dx="12">Единство народов России</tspan></text>
+    </g>
+    <text x="0" y="411" class="sans muted" font-size="12">Полные формулировки — в проекте и пункте 5 Указа № 809.</text>
+  </g>
+
+  <g transform="translate(480 268)">
+    <path d="M0 45Q80 5 175 42T350 30Q450 2 532 48T700 40V390Q613 427 526 392T349 404Q220 429 132 395T0 410Z" fill="#d9d9bd" stroke="#749087" stroke-width="2"/>
+    <path d="M-22 253C84 139 123 367 235 250S376 129 455 239 581 365 645 239 734 140 755 185" fill="none" stroke="url(#river)" stroke-width="43"/>
+    <path d="M-18 248C90 135 126 360 238 244S378 124 458 233 580 354 650 233 731 134 754 179" fill="none" stroke="#f2dfb9" stroke-width="1.5" stroke-dasharray="5 7"/>
+    <path d="M30 98Q200 50 300 101T650 83M26 341Q170 278 316 341T674 322" fill="none" stroke="#a8774a" stroke-width="2" stroke-dasharray="4 9"/>
+    <g fill="#fff1d2" stroke="#946844" stroke-width="3" font-family="Georgia,serif" font-size="13" text-anchor="middle">
+      <g><circle cx="56" cy="104" r="20"/><text x="56" y="109" fill="#17303b" stroke="none">01</text></g><g><circle cx="170" cy="73" r="20"/><text x="170" y="78" fill="#17303b" stroke="none">02</text></g><g><circle cx="280" cy="99" r="20"/><text x="280" y="104" fill="#17303b" stroke="none">03</text></g><g><circle cx="402" cy="75" r="20"/><text x="402" y="80" fill="#17303b" stroke="none">04</text></g><g><circle cx="536" cy="98" r="20"/><text x="536" y="103" fill="#17303b" stroke="none">05</text></g><g><circle cx="649" cy="73" r="20"/><text x="649" y="78" fill="#17303b" stroke="none">06</text></g>
+      <g><circle cx="105" cy="212" r="20"/><text x="105" y="217" fill="#17303b" stroke="none">07</text></g><g><circle cx="215" cy="192" r="20"/><text x="215" y="197" fill="#17303b" stroke="none">08</text></g><g><circle cx="330" cy="219" r="20"/><text x="330" y="224" fill="#17303b" stroke="none">09</text></g><g><circle cx="453" cy="197" r="20"/><text x="453" y="202" fill="#17303b" stroke="none">10</text></g><g><circle cx="565" cy="217" r="20"/><text x="565" y="222" fill="#17303b" stroke="none">11</text></g><g><circle cx="675" cy="198" r="20"/><text x="675" y="203" fill="#17303b" stroke="none">12</text></g>
+      <g><circle cx="61" cy="331" r="20"/><text x="61" y="336" fill="#17303b" stroke="none">13</text></g><g><circle cx="178" cy="359" r="20"/><text x="178" y="364" fill="#17303b" stroke="none">14</text></g><g><circle cx="298" cy="348" r="20"/><text x="298" y="353" fill="#17303b" stroke="none">15</text></g><g><circle cx="432" cy="363" r="20"/><text x="432" y="368" fill="#17303b" stroke="none">16</text></g><g><circle cx="559" cy="343" r="20"/><text x="559" y="348" fill="#17303b" stroke="none">17</text></g>
+    </g>
+    <g fill="#f2bd70"><circle cx="56" cy="104" r="3"/><circle cx="170" cy="73" r="3"/><circle cx="280" cy="99" r="3"/><circle cx="402" cy="75" r="3"/><circle cx="536" cy="98" r="3"/><circle cx="649" cy="73" r="3"/><circle cx="105" cy="212" r="3"/><circle cx="215" cy="192" r="3"/><circle cx="330" cy="219" r="3"/><circle cx="453" cy="197" r="3"/><circle cx="565" cy="217" r="3"/><circle cx="675" cy="198" r="3"/><circle cx="61" cy="331" r="3"/><circle cx="178" cy="359" r="3"/><circle cx="298" cy="348" r="3"/><circle cx="432" cy="363" r="3"/><circle cx="559" cy="343" r="3"/></g>
+    <path d="M238 121v48m-12-16 12 16 12-16M453 233v25m-11-10 11 10 11-10" fill="none" stroke="#9a693f" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <path d="M84 756h1532" class="line" stroke-width="2"/>
+  <text x="82" y="803" class="serif ink" font-size="25">Город меняется, когда мы действуем вместе</text>
+  <text x="82" y="836" class="sans muted" font-size="14">Проект учеников 9А класса гимназии № 122 имени Ж. А. Зайцевой · Казань</text>
+  <g fill="none" stroke="#a47d53" stroke-width="2">
+    <rect x="83" y="874" width="314" height="193" rx="4"/><rect x="420" y="874" width="314" height="193" rx="4"/><rect x="757" y="874" width="314" height="193" rx="4"/>
+  </g>
+  <g class="serif muted" font-size="16" text-anchor="middle"><text x="240" y="971">Фото общего дела</text><text x="577" y="971">Фото 9А</text><text x="914" y="971">Фото события</text></g>
+  <text x="83" y="1097" class="sans muted" font-size="12">Фото добавить после согласования и подтверждения разрешений.</text>
+  <g transform="translate(1278 856)"><rect width="174" height="174" fill="#fffaf0" stroke="#9b7048" stroke-width="2"/><image href="./site-qr.svg" x="8" y="8" width="158" height="158"/><text x="87" y="198" class="sans ink" font-size="12" text-anchor="middle">Открыть сказку</text></g>
+  <text x="1511" y="1111" class="serif gold" font-size="16">Мечтай · Действуй · Береги</text>
+  <text x="850" y="1138" text-anchor="middle" class="sans muted" font-size="10">Цифровой образец: по условиям конкурса бумажную стенгазету следует оформить вручную.</text>
+</svg>

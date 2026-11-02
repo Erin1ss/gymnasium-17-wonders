@@ -1,0 +1,40 @@
+{
+  "name": "gymnasium-17-wonders",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "prepare:poster": "node scripts/generate-qr.mjs",
+    "prepare:favicon": "node scripts/generate-favicon.mjs",
+    "prepare:art": "node scripts/prepare-generated-art.mjs",
+    "optimize:images": "node scripts/optimize-images.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.10.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "jsdom": "^27.2.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.34.5",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
+  }
+}
