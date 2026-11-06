@@ -209,7 +209,12 @@ function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete:
   const nextChapter = chapters.find((chapter) => !complete.includes(chapter.id))
   return <section className="page map-page">
     <div className="page-heading map-heading"><div><p className="eyebrow">Собрано {complete.length} из 17 символов</p><h1>Город ждёт тебя</h1><p><span className="map-desktop-hint">Нажми на огонь, чтобы открыть сказку.</span><span className="map-mobile-hint">Начни с первого чуда или выбери историю ниже.</span></p></div>{nextChapter ? <button className="button button-primary map-start" onClick={() => onOpen(nextChapter)}>{complete.length ? 'Продолжить путь' : 'Начать с первого чуда'} <span aria-hidden="true">→</span></button> : <button className="button button-primary map-start" onClick={onFinish}>Посмотреть финал <span aria-hidden="true">→</span></button>}</div>
-    <div className="mobile-city-art"><img src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Волшебный город на берегу реки" /><MapConstellation mobile /></div>
+    <div className="mobile-city-art"><img src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Волшебный город на берегу реки" /><MapConstellation mobile />{chapters.map((chapter, index) => {
+      const [left, top] = places[index]
+      return <button key={chapter.id} type="button" title={`${String(index + 1).padStart(2, '0')} · ${chapter.value}`} className={`map-marker mobile-map-marker ${complete.includes(chapter.id) ? 'is-restored' : ''}`} style={{ left: `${Math.max(left, 7)}%`, top: `${top}%`, '--accent': chapter.accent, '--marker-delay': `${(index % 6) * 70}ms` } as CSSProperties} onClick={() => onOpen(chapter)} aria-label={`Открыть чудо ${index + 1}: ${chapter.place}. Ценность: ${chapter.value}${complete.includes(chapter.id) ? '. Символ уже собран' : ''}`}>
+        <span className="marker-number">{String(index + 1).padStart(2, '0')}</span>
+      </button>
+    })}</div>
     <div className="map-layout">
       <div className="map-scroll" aria-label="Волшебная карта города с семнадцатью огнями">
         <div className="map-canvas">

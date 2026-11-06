@@ -569,6 +569,8 @@ body { font-size: 17px; }
 .journal-panel, .confirm-dialog { animation: panel-arrive var(--motion-panel) var(--ease-spring) both; }
 .toast { animation: toast-arrive var(--motion-normal) var(--ease-enter) both; }
 .site-footer .sound-toggle[aria-pressed="true"] { color: var(--gold-pale); }
+.mobile-city-art .mobile-map-marker { width: 34px; height: 34px; padding: 0; border-radius: 50%; backdrop-filter: blur(3px); }
+.mobile-city-art .mobile-map-marker .marker-number { font-size: 10px; }
 @keyframes page-arrive { from { opacity: 0; transform: translate3d(0, 12px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
 @keyframes content-arrive { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
 @keyframes city-drift { from { transform: scale(1); } to { transform: scale(1.045); } }
