@@ -270,9 +270,11 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onNext, nextChapte
   }
   const checkMatches = () => {
     const data = chapter.interaction as MatchingInteraction
-    if (matches.length !== data.pairs.length || matches.some((item) => item === -1)) { setFeedback('Найди пару для каждой подсказки.'); return }
+    const selectedCount = matches.filter((item) => item >= 0).length
+    if (selectedCount !== data.pairs.length) { setFeedback(`Выбери цель для каждой строки — заполнено ${selectedCount} из ${data.pairs.length}.`); return }
+    if (new Set(matches).size !== data.pairs.length) { setFeedback('Каждый вариант можно использовать только один раз.'); return }
     if (isCorrectInteraction(chapter.interaction, matches)) { setPassed(true); onComplete(); setFeedback(data.success) }
-    else setFeedback('Некоторые пары ещё не сошлись. Попробуй снова.')
+    else setFeedback('Проверь, подходит ли выбранная цель каждому сокровищу.')
   }
   const moveItem = (from: number, direction: -1 | 1) => setOrder((old) => {
     const list = old.length ? [...old] : (ordered?.items.map((_, i) => i) ?? [])
@@ -338,7 +340,12 @@ function InteractionBox({ chapter, choice, setChoice, order, matches, setMatches
   if (item.type === 'matching') {
     const data = item as MatchingInteraction
     const options = data.pairs.map((pair) => pair.right)
-    return <div className="interaction-body"><p className="interaction-prompt">{item.prompt}</p><div className="matching-list">{data.pairs.map((pair, i) => <label key={pair.left}><span>{pair.left}</span><select aria-label={`Пара для: ${pair.left}`} value={matches[i] ?? -1} onChange={(event) => { const next = Array.from({ length: data.pairs.length }, (_, n) => matches[n] ?? -1); next[i] = Number(event.target.value); setMatches(next) }}><option value={-1}>Выбрать пару</option>{options.map((option, j) => <option key={option} value={j}>{option}</option>)}</select></label>)}</div><button className="button button-primary check-button" onClick={onMatchCheck}>{passed ? 'Пары найдены' : 'Проверить пары'}</button><Feedback text={feedback} passed={passed} /></div>
+    const selectedCount = matches.filter((value) => value >= 0).length
+    return <div className="interaction-body">
+      <div className="matching-guidance"><p className="interaction-prompt">{item.prompt}</p><span className="matching-progress" aria-live="polite">{selectedCount} из {data.pairs.length} выбрано</span></div>
+      <div className="matching-list">{data.pairs.map((pair, i) => <label key={pair.left}><span>{pair.left}</span><select aria-label={`Цель для: ${pair.left}`} value={matches[i] ?? -1} onChange={(event) => { const next = Array.from({ length: data.pairs.length }, (_, n) => matches[n] ?? -1); next[i] = Number(event.target.value); setMatches(next) }}><option value={-1}>Выбери цель</option>{options.map((option, j) => <option key={option} value={j} disabled={matches.some((value, other) => other !== i && value === j)}>{option}</option>)}</select></label>)}</div>
+      <button className="button button-primary check-button" onClick={onMatchCheck}>{passed ? 'Пары найдены' : 'Проверить пары'}</button><Feedback text={feedback} passed={passed} />
+    </div>
   }
   return null
 }
