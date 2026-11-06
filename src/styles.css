@@ -643,6 +643,9 @@ body { font-size: 17px; }
 .real-life-reveal p { margin: 0; max-width: 380px; color: var(--paper-muted); font-size: 15px; line-height: 1.5; }
 .real-life-reveal .button { flex: 0 0 auto; }
 .question-focus > .real-life-panel { width: 100%; margin: 18px 0 0; }
+.next-chapter-step { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(233,217,185,.16); }
+.next-chapter-step .eyebrow { margin: 0; color: var(--paper-muted); }
+.next-chapter-step .button { flex: 0 1 auto; min-height: 54px; }
 @media (max-width: 600px) {
   .page.chapter-page { width: calc(100% - 32px); padding: 24px 0 40px; }
   .chapter-page .chapter-topline { margin-bottom: 18px; }
@@ -665,4 +668,6 @@ body { font-size: 17px; }
   .question-answer-card .choice-option { min-height: 56px; font-size: 15px; }
   .real-life-reveal { align-items: stretch; flex-direction: column; }
   .real-life-reveal .button { width: 100%; }
+  .next-chapter-step { align-items: stretch; flex-direction: column; gap: 10px; }
+  .next-chapter-step .button { width: 100%; }
 }

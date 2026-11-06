@@ -52,6 +52,7 @@ function App() {
   }, [])
 
   const current = route.page === 'chapter' ? chapters.find((item) => item.id === route.id) : undefined
+  const nextAfterCurrent = current ? chapters[chapters.indexOf(current) + 1] : undefined
   const count = complete.length
   const go = (path: string) => { window.location.hash = path }
   const markComplete = (id: string) => {
@@ -136,7 +137,7 @@ function App() {
       <main id="main-content">
         {route.page === 'intro' && <Intro onStart={continueJourney} progress={count} nextChapter={chapters.find((chapter) => !complete.includes(chapter.id))?.value} />}
         {route.page === 'map' && <MapPage complete={complete} selected={selected} onSelect={setSelected} onOpen={(chapter) => go(`/chapter/${chapter.id}`)} onFinish={() => go('/finale')} />}
-        {route.page === 'chapter' && current && <ChapterPage chapter={current} complete={complete.includes(current.id)} onBack={() => go('/map')} onComplete={() => markComplete(current.id)} />}
+        {route.page === 'chapter' && current && <ChapterPage chapter={current} complete={complete.includes(current.id)} onBack={() => go('/map')} onComplete={() => markComplete(current.id)} onNext={() => go(nextAfterCurrent ? `/chapter/${nextAfterCurrent.id}` : '/finale')} nextChapter={nextAfterCurrent} />}
         {route.page === 'chapter' && !current && <EmptyRoute onMap={() => go('/map')} />}
         {route.page === 'gallery' && <Gallery />}
         {route.page === 'about' && <About />}
@@ -241,7 +242,7 @@ function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete:
   </section>
 }
 
-function ChapterPage({ chapter, complete, onBack, onComplete }: { chapter: Chapter; complete: boolean; onBack: () => void; onComplete: () => void }) {
+function ChapterPage({ chapter, complete, onBack, onComplete, onNext, nextChapter }: { chapter: Chapter; complete: boolean; onBack: () => void; onComplete: () => void; onNext: () => void; nextChapter?: Chapter }) {
   const index = chapters.indexOf(chapter)
   const [step, setStep] = useState<'story' | 'question'>(complete ? 'question' : 'story')
   const [feedback, setFeedback] = useState('')
@@ -293,8 +294,9 @@ function ChapterPage({ chapter, complete, onBack, onComplete }: { chapter: Chapt
       <div className="question-answer-card">
         {passed ? <p className="question-solved" role="status"><span aria-hidden="true">✦</span> Ответ принят. Чудо восстановлено.</p> : <InteractionBox chapter={chapter} choice={choice} setChoice={setChoice} order={order} matches={matches} setMatches={setMatches} moveItem={moveItem} onChoiceCheck={checkChoice} onOrderCheck={checkOrder} onMatchCheck={checkMatches} feedback={feedback} passed={false} />}
       </div>
-      {passed && <div className="real-life-reveal"><p>Чудо восстановлено. Посмотри, как эта ценность проявляется в жизни класса.</p><button className="button button-outline" aria-expanded={showExamples} onClick={() => setShowExamples((value) => !value)}>{showExamples ? 'Скрыть примеры' : 'Посмотреть примеры из жизни'} <span aria-hidden="true">{showExamples ? '↑' : '↓'}</span></button></div>}
+      {passed && <div className="real-life-reveal"><p>Сначала посмотри, как эта ценность проявляется в жизни класса.</p><button className="button button-outline" aria-expanded={showExamples} onClick={() => setShowExamples((value) => !value)}>{showExamples ? 'Скрыть примеры' : 'Посмотреть примеры из жизни'} <span aria-hidden="true">{showExamples ? '↑' : '↓'}</span></button></div>}
       {passed && showExamples && <RealLifeConnection chapter={chapter} />}
+      {passed && showExamples && <div className="next-chapter-step"><p className="eyebrow">Дальше</p><button className="button button-primary" onClick={onNext}>{nextChapter ? `Следующее чудо: ${nextChapter.value}` : 'Перейти к финалу'} <span aria-hidden="true">→</span></button></div>}
     </section>}
   </section>
 }
