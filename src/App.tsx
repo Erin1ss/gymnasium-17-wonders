@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from 'react'
+import { type CSSProperties, useEffect, useId, useState } from 'react'
 import { chapters } from './content/chapters'
 import { mediaCatalog } from './content/media'
 import type { Chapter, MatchingInteraction, OrderedInteraction } from './content/types'
@@ -72,7 +72,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${motion ? '' : ' motion-off'}`}>
       <header className="site-header">
         <a className="brand" href="#/intro" aria-label="Гимназия 122 — на главную">
           <CompassMark />
@@ -267,35 +267,126 @@ function InteractionBox({ chapter, choice, setChoice, order, matches, setMatches
 }
 function Feedback({ text, passed }: { text: string; passed: boolean }) { return text ? <p className={`interaction-feedback ${passed ? 'is-good' : ''}`} role="status">{passed && <span aria-hidden="true">✦ </span>}{text}</p> : null }
 
+function DistrictBackdrop({ id }: { id: string }) {
+  switch (id) {
+    case 'life': return <g className="district-scene"><path d="M108 254V171a212 212 0 0 1 424 0v83M154 254V184a166 166 0 0 1 332 0v70" fill="none" stroke="#9bc9b1" strokeOpacity=".24" strokeWidth="8"/><path d="M320 49v208M110 168h420M182 94l138 78 138-78" fill="none" stroke="#9bc9b1" strokeOpacity=".18" strokeWidth="3"/><path d="M98 259h444" stroke="#a8cfb9" strokeOpacity=".3" strokeWidth="4"/></g>
+    case 'dignity': return <g className="district-scene"><path d="M74 250V146a246 246 0 0 1 492 0v104M116 250V155a204 204 0 0 1 408 0v95" fill="none" stroke="#e1b99e" strokeOpacity=".28" strokeWidth="10"/><path d="M74 217h492M105 250h430" stroke="#e1b99e" strokeOpacity=".24" strokeWidth="5"/><path d="M160 160v82m320-82v82" stroke="#e1b99e" strokeOpacity=".22" strokeWidth="8"/></g>
+    case 'rights-freedoms': return <g className="district-scene"><path d="M102 259V136a218 218 0 0 1 436 0v123" fill="none" stroke="#9ecde0" strokeOpacity=".27" strokeWidth="12"/><path d="M320 72v187m-146-69h292" stroke="#9ecde0" strokeOpacity=".22" strokeWidth="5"/><path d="M103 258h100v-82h-51m385 82H437v-82h51" fill="#a3d9eb" fillOpacity=".08" stroke="#a3d9eb" strokeOpacity=".32" strokeWidth="3"/></g>
+    case 'patriotism': return <g className="district-scene"><path d="M0 211q104-60 216 0t208 0q108-61 216 0v80H0z" fill="#36758a" fillOpacity=".35"/><path d="M0 244q96-42 190 0t186 0q122-48 264 0v48H0z" fill="#74b2b2" fillOpacity=".22"/><path d="M0 292q134-35 268 0t372 0" fill="none" stroke="#f2d99c" strokeOpacity=".4" strokeWidth="4"/></g>
+    case 'citizenship': return <g className="district-scene"><path d="M105 246h430M132 241V142l188-74 188 74v99" fill="#5d7880" fillOpacity=".18" stroke="#b8c9b0" strokeOpacity=".28" strokeWidth="7"/><path d="M182 238V147m69 91V123m138 115V123m69 115v-91" stroke="#b8c9b0" strokeOpacity=".25" strokeWidth="9"/><path d="M114 252h412" stroke="#e9d9b9" strokeOpacity=".22" strokeWidth="5"/></g>
+    case 'service-country': return <g className="district-scene"><path d="M156 259V124l44-38h240l44 38v135" fill="#a5bfd0" fillOpacity=".1" stroke="#b6d3dd" strokeOpacity=".32" strokeWidth="6"/><path d="M185 259V142h270v117M303 86V61h34v25" fill="none" stroke="#b6d3dd" strokeOpacity=".3" strokeWidth="6"/><path d="M140 260h360" stroke="#e1d9be" strokeOpacity=".25" strokeWidth="5"/></g>
+    case 'ideals': return <g className="district-scene"><path d="M180 259v-62a140 140 0 0 1 280 0v62" fill="#b8a2d3" fillOpacity=".12" stroke="#c6b9ed" strokeOpacity=".3" strokeWidth="6"/><path d="M165 259h310M215 222h210M250 198h140" stroke="#c6b9ed" strokeOpacity=".24" strokeWidth="4"/><path d="M206 196a114 114 0 0 1 228 0" fill="none" stroke="#c6b9ed" strokeOpacity=".3" strokeWidth="5"/></g>
+    case 'family': return <g className="district-scene"><path d="M82 256v-95l88-65 89 65v95m48 0v-95l88-65 89 65v95" fill="#d6aa82" fillOpacity=".12" stroke="#e2bf98" strokeOpacity=".3" strokeWidth="6"/><path d="M111 159h119m79 0h119M145 119v26m119-26v26m79-26v26" stroke="#e2bf98" strokeOpacity=".25" strokeWidth="4"/><path d="M78 257h410" stroke="#e2bf98" strokeOpacity=".25" strokeWidth="5"/></g>
+    case 'creative-work': return <g className="district-scene"><path d="M38 234h564M70 233v-61m500 61v-61M70 172q250 220 500 0" fill="none" stroke="#dfb266" strokeOpacity=".32" strokeWidth="8"/><path d="M96 171l70 62m68-44 63 44m68-44 62 44m68-62-70 62" stroke="#dfb266" strokeOpacity=".25" strokeWidth="5"/><path d="M40 257h560" stroke="#e6d2a3" strokeOpacity=".23" strokeWidth="5"/></g>
+    case 'spiritual-priority': return <g className="district-scene"><path d="M110 251v-74a210 210 0 0 1 420 0v74" fill="none" stroke="#efc979" strokeOpacity=".26" strokeWidth="7"/><path d="M145 251v-57m350 57v-57M178 251v-38m284 38v-38" stroke="#efc979" strokeOpacity=".24" strokeWidth="6"/><path d="M88 254h466" stroke="#efc979" strokeOpacity=".28" strokeWidth="5"/></g>
+    case 'humanism': return <g className="district-scene"><path d="M66 247h508M99 241v-94l221-82 221 82v94" fill="#add0d0" fillOpacity=".1" stroke="#add0d0" strokeOpacity=".29" strokeWidth="6"/><path d="M144 240v-54m88 54v-83m176 83v-83m88 83v-54" stroke="#add0d0" strokeOpacity=".25" strokeWidth="6"/><path d="M112 154h416" stroke="#add0d0" strokeOpacity=".24" strokeWidth="4"/></g>
+    case 'mercy': return <g className="district-scene"><path d="M103 257v-91l217-92 217 92v91" fill="#c8c6b1" fillOpacity=".12" stroke="#d3d7c6" strokeOpacity=".28" strokeWidth="7"/><path d="M154 255v-68m110 68v-91m112 91v-91m111 91v-68" stroke="#d3d7c6" strokeOpacity=".25" strokeWidth="7"/><path d="M88 259h464" stroke="#d3d7c6" strokeOpacity=".28" strokeWidth="5"/></g>
+    case 'justice': return <g className="district-scene"><path d="M93 255V139h454v116M72 256h496M122 144v107m78-107v107m118-107v107m78-107v107m78-107v107" fill="none" stroke="#d7b881" strokeOpacity=".3" strokeWidth="7"/><path d="M82 137l238-70 238 70" fill="#d7b881" fillOpacity=".12" stroke="#d7b881" strokeOpacity=".34" strokeWidth="6"/></g>
+    case 'collectivism': return <g className="district-scene"><path d="M100 240q0-100 220-100t220 100" fill="none" stroke="#d5a6c6" strokeOpacity=".26" strokeWidth="8"/><path d="M124 222q0-58 196-58t196 58M149 205q0-28 171-28t171 28" fill="none" stroke="#d5a6c6" strokeOpacity=".22" strokeWidth="6"/><path d="M76 258h488" stroke="#d5a6c6" strokeOpacity=".28" strokeWidth="5"/></g>
+    case 'mutual-respect': return <g className="district-scene"><path d="M0 207q82-51 160 0t160 0q78-51 160 0t160 0v85H0z" fill="#3a7184" fillOpacity=".34"/><path d="M54 246h532m-490-3v-85m406 85v-85m-406 0q203 195 406 0" fill="none" stroke="#d8c78f" strokeOpacity=".3" strokeWidth="7"/><path d="M0 283q146-27 290 0t350 0" fill="none" stroke="#8cc6c3" strokeOpacity=".36" strokeWidth="5"/></g>
+    case 'memory-generations': return <g className="district-scene"><path d="M90 258V87h460v171" fill="#d1bb88" fillOpacity=".09" stroke="#d1bb88" strokeOpacity=".3" strokeWidth="6"/><path d="M132 239V121h67v118m38 0V104h67v135m38 0V104h67v135m38 0V121h67v118" fill="#d1bb88" fillOpacity=".12" stroke="#d1bb88" strokeOpacity=".25" strokeWidth="4"/><path d="M74 259h500" stroke="#d1bb88" strokeOpacity=".25" strokeWidth="5"/></g>
+    case 'unity-peoples': return <g className="district-scene"><path d="M56 250V156h116v94m72 0V111h142v139m72 0v-94h116v94" fill="#d2b891" fillOpacity=".1" stroke="#d2b891" strokeOpacity=".3" strokeWidth="6"/><path d="M56 156l58-52 58 52m72-45 71-62 71 62m72 45 58-52 58 52" fill="none" stroke="#d2b891" strokeOpacity=".34" strokeWidth="6"/><path d="M48 258h544" stroke="#d2b891" strokeOpacity=".27" strokeWidth="5"/></g>
+    default: return <g />
+  }
+}
+
+function DignityScene() {
+  return <g className="dignity-scene">
+    <path d="M36 265V145a284 284 0 0 1 568 0v120" fill="#264252" fillOpacity=".54" stroke="#f0c4a8" strokeOpacity=".45" strokeWidth="8" />
+    <path d="M84 265V157a236 236 0 0 1 472 0v108" fill="none" stroke="#f5d4b8" strokeOpacity=".19" strokeWidth="5" />
+    <path d="M106 261V172m428 89v-89M320 260V100" stroke="#eac5ad" strokeOpacity=".2" strokeWidth="8" />
+    <path d="M56 274q264-24 528 0v38H56z" fill="#182f3d" />
+    <path d="M82 294q238-19 476 0" fill="none" stroke="#d2aa8e" strokeOpacity=".23" strokeWidth="4" />
+    <g className="dignity-figures" fill="#788d91">
+      <path d="M141 208v-24a24 24 0 0 1 48 0v24zM132 209h66v37h-66z" />
+      <circle cx="165" cy="173" r="15" fill="#c2b2a1" />
+      <path d="M446 208v-24a24 24 0 0 1 48 0v24zM437 209h66v37h-66z" />
+      <circle cx="470" cy="173" r="15" fill="#c2b2a1" />
+    </g>
+    <g className="dignity-nameplates">
+      <rect x="136" y="220" width="56" height="17" rx="4" fill="#f2bd83" fillOpacity=".28" />
+      <path d="M148 228h32" stroke="#ffe2a5" strokeWidth="3" strokeLinecap="round" />
+      <rect x="432" y="220" width="76" height="17" rx="4" fill="#f2bd83" fillOpacity=".28" />
+      <path d="M446 228h47" stroke="#ffe2a5" strokeWidth="3" strokeLinecap="round" />
+    </g>
+    <g className="dignity-speaker">
+      <circle cx="253" cy="199" r="19" fill="#e8b58b" />
+      <path d="M235 197q4-22 25-17l12 10-5 7q-12-10-32 0" fill="#433e48" />
+      <path d="M224 269v-31q0-23 29-23t29 23v31z" fill="#b27270" />
+      <path d="M232 238l-23 22m48-29 24-20" fill="none" stroke="#e8b58b" strokeWidth="9" strokeLinecap="round" />
+      <path d="M273 202l47-11 17 35-49 11z" fill="#f2dcad" stroke="#fff0c7" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M282 207l28-7m-24 18 32-8" stroke="#c88972" strokeWidth="3" strokeLinecap="round" />
+    </g>
+    <g className="dignity-listener">
+      <circle cx="385" cy="198" r="19" fill="#c99675" />
+      <path d="M367 196q2-22 24-18l13 13-8 6q-11-10-29-1" fill="#35414a" />
+      <path d="M353 269v-32q0-22 31-22t31 22v32z" fill="#6f9b98" />
+      <path d="M360 239l-20-17m47 7 18 18" fill="none" stroke="#c99675" strokeWidth="9" strokeLinecap="round" />
+    </g>
+    <g className="dignity-listening-lines" fill="none" stroke="#ffe2a5" strokeWidth="3" strokeLinecap="round">
+      <path d="M405 169q12 8 0 16" /><path d="M415 163q20 14 0 28" />
+    </g>
+    <circle className="scene-spark scene-spark-one" cx="222" cy="100" r="4" fill="#ffe2a5" />
+    <circle className="scene-spark scene-spark-two" cx="416" cy="118" r="3" fill="#ffe2a5" />
+  </g>
+}
+
 function StoryIllustration({ id, small = false }: { id: string; small?: boolean }) {
+  const instanceId = useId().replace(/:/g, '')
+  const chapter = chapters.find((item) => item.id === id)
+  const description = id === 'dignity'
+    ? 'На старой площади два горожанина разговаривают и слушают друг друга, а стёртые имена вновь загораются на каменных табличках.'
+    : `Сказочный образ места «${chapter?.place ?? 'Хоровой маяк'}»: район города просыпается, а его главный символ светится.`
   const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   const art = (() => {
     switch (id) {
       case 'life': return <><path d="M160 166V92M160 125q-38-34-49-7 8 28 49 23M160 111q32-40 53-17-7 26-53 36" {...common}/><path d="M91 174h138M115 174q10-35 45-35t45 35" {...common}/><circle cx="160" cy="81" r="16" fill="currentColor" opacity=".35"/></>
       case 'dignity': return <><path d="M113 75h94v111h-94zM130 99h60M130 119h48M130 139h40" {...common}/><path d="M160 66v-18m0 0-9 9m9-9 9 9M99 187h122" {...common}/><circle cx="190" cy="157" r="8" fill="currentColor" opacity=".6"/></>
-      case 'rights': return <><path d="M108 181V102a52 52 0 0 1 104 0v79M160 54v130M95 183h130" {...common}/><path d="M123 128h23m28 0h23M135 154h14m22 0h14" {...common}/><circle cx="160" cy="90" r="9" fill="currentColor" opacity=".5"/></>
+      case 'rights-freedoms': return <><path d="M108 181V102a52 52 0 0 1 104 0v79M160 54v130M95 183h130" {...common}/><path d="M123 128h23m28 0h23M135 154h14m22 0h14" {...common}/><circle cx="160" cy="90" r="9" fill="currentColor" opacity=".5"/></>
       case 'patriotism': return <><path d="M86 163q32-37 62 0t62 0q24-29 48-1M92 180q37-17 69 0t68 0" {...common}/><path d="M159 139V76h42l-12 15 12 15h-42" {...common}/><path d="M126 130l10-24 10 24m-17-7h14" {...common}/></>
       case 'citizenship': return <><path d="M160 58v32m-33 10h66M133 100l-20 45h40zm54 0-20 45h40zM145 151h30v28h-30z" {...common}/><path d="M160 55q-7 7 0 13t0 13" {...common}/><circle cx="160" cy="61" r="41" strokeDasharray="2 9" opacity=".5"/></>
-      case 'service': return <><path d="M114 177h92l-13-29h-66zM127 146V99h66v47M120 98h80l-8-18h-64z" {...common}/><path d="M160 58v21m-39 4h78M142 116h36" {...common}/><path d="M160 26l5 15 15 5-15 5-5 15-5-15-15-5 15-5z" fill="currentColor" opacity=".55"/></>
+      case 'service-country': return <><path d="M114 177h92l-13-29h-66zM127 146V99h66v47M120 98h80l-8-18h-64z" {...common}/><path d="M160 58v21m-39 4h78M142 116h36" {...common}/><path d="M160 26l5 15 15 5-15 5-5 15-5-15-15-5 15-5z" fill="currentColor" opacity=".55"/></>
       case 'ideals': return <><circle cx="160" cy="112" r="46" {...common}/><path d="M160 69v20m0 46v20m-43-43h20m46 0h20M160 86l10 26-10 27-10-27z" {...common}/><path d="M100 176h120M110 190h100" {...common}/></>
       case 'family': return <><path d="M99 112l61-48 61 48v69H99zM145 181v-42h30v42" {...common}/><path d="M129 110a10 10 0 1 0 0-20 10 10 0 0 0 0 20zm62 0a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" {...common}/><path d="M132 127q12-14 24 0m28 0q12-14 24 0" {...common}/></>
-      case 'labor': return <><path d="M94 180h132M107 167l25-45 25 45 25-45 25 45M130 117l28 48m-4-48-27 48M157 114l28 53" {...common}/><path d="M160 85v28m-18-17 18-18 18 18" {...common}/><circle cx="160" cy="88" r="5" fill="currentColor"/></>
-      case 'spiritual': return <><path d="M103 170q57-35 114 0v12H103zM127 158V93l33-26 33 26v65" {...common}/><path d="M160 48v26m-10-14 10-12 10 12M144 116h32" {...common}/><circle cx="160" cy="114" r="7" fill="currentColor" opacity=".65"/><path d="M100 190h120" {...common}/></>
+      case 'creative-work': return <><path d="M94 180h132M107 167l25-45 25 45 25-45 25 45M130 117l28 48m-4-48-27 48M157 114l28 53" {...common}/><path d="M160 85v28m-18-17 18-18 18 18" {...common}/><circle cx="160" cy="88" r="5" fill="currentColor"/></>
+      case 'spiritual-priority': return <><path d="M103 170q57-35 114 0v12H103zM127 158V93l33-26 33 26v65" {...common}/><path d="M160 48v26m-10-14 10-12 10 12M144 116h32" {...common}/><circle cx="160" cy="114" r="7" fill="currentColor" opacity=".65"/><path d="M100 190h120" {...common}/></>
       case 'humanism': return <><path d="M109 162q22-34 51 0t51 0M160 68v33m-15-17 15-16 15 16" {...common}/><circle cx="160" cy="124" r="35" {...common}/><path d="M143 126q17 19 34 0" {...common}/><circle cx="148" cy="116" r="2" fill="currentColor"/><circle cx="172" cy="116" r="2" fill="currentColor"/></>
       case 'mercy': return <><path d="M103 161h114l-17 22h-81zM121 160v-49h78v49M116 109h88l-9-18h-70z" {...common}/><path d="M160 117v32m-16-16h32" {...common} strokeWidth={6}/><path d="M108 190h104" {...common}/></>
       case 'justice': return <><path d="M160 68v112m-54-78h108M124 102l-20 43h40zm72 0-20 43h40zM130 181h60" {...common}/><circle cx="160" cy="64" r="7" fill="currentColor"/></>
       case 'collectivism': return <><path d="M100 174q28-49 59 0 28-49 59 0M160 89v56m-27-30h54" {...common}/><path d="M120 101q-10-18 8-28 18-8 24 11m30 17q10-18-8-28-18-8-24 11" {...common}/><path d="M91 183h138" {...common}/></>
-      case 'mutual-help': return <><path d="M97 143l30-28 28 19 39-35 31 25M91 161l39 21 30-22 30 15 43-25" {...common}/><path d="M159 79l6 17 17 6-17 6-6 17-6-17-17-6 17-6z" fill="currentColor" opacity=".55"/><circle cx="120" cy="123" r="6" fill="currentColor"/><circle cx="197" cy="104" r="6" fill="currentColor"/></>
-      case 'memory': return <><path d="M102 83h48a14 14 0 0 1 14 14v84h-48a14 14 0 0 0-14 14zM218 83h-48a14 14 0 0 0-14 14v84h48a14 14 0 0 1 14 14z" {...common}/><path d="M120 109h29m-29 19h29m18-19h29m-29 19h29" {...common}/><path d="M160 74q-19-17-24 0m24 0q19-17 24 0" {...common}/></>
+      case 'mutual-respect': return <><path d="M97 143l30-28 28 19 39-35 31 25M91 161l39 21 30-22 30 15 43-25" {...common}/><path d="M159 79l6 17 17 6-17 6-6 17-6-17-17-6 17-6z" fill="currentColor" opacity=".55"/><circle cx="120" cy="123" r="6" fill="currentColor"/><circle cx="197" cy="104" r="6" fill="currentColor"/></>
+      case 'memory-generations': return <><path d="M102 83h48a14 14 0 0 1 14 14v84h-48a14 14 0 0 0-14 14zM218 83h-48a14 14 0 0 0-14 14v84h48a14 14 0 0 1 14 14z" {...common}/><path d="M120 109h29m-29 19h29m18-19h29m-29 19h29" {...common}/><path d="M160 74q-19-17-24 0m24 0q19-17 24 0" {...common}/></>
       case 'unity-peoples': return <><path d="M105 171h110M118 171v-57h84v57M110 114h100l-9-16h-82zM131 145h58" {...common}/><path d="M80 96q30-27 60 0t60 0q30-27 60 0M80 124q30-27 60 0t60 0q30-27 60 0" {...common}/><path d="M160 51v30m-11-11 11-12 11 12" {...common}/><circle cx="160" cy="48" r="5" fill="currentColor"/></>
       default: return <><circle cx="160" cy="122" r="52" {...common}/><path d="M114 106q23 18 46 0t46 0M114 138q23-18 46 0t46 0M160 70v104" {...common}/><path d="M132 86l-15 13m71-13 15 13M132 158l-15-13m71 13 15-13" {...common}/></>
     }
   })()
-  return <svg className={`scene-illustration ${small ? 'scene-small' : ''}`} viewBox="0 0 320 220" role="img" aria-label={`Иллюстрация к главе «${chapters.find((chapter) => chapter.id === id)?.value ?? 'Единство народов России'}»`} style={{ color: 'var(--accent, #efa86b)' }}>
-    <defs><radialGradient id={`scene-glow-${id}`}><stop stopColor="currentColor" stopOpacity=".28"/><stop offset="1" stopColor="currentColor" stopOpacity="0"/></radialGradient></defs>
-    <ellipse cx="160" cy="169" rx="120" ry="56" fill={`url(#scene-glow-${id})`} />
-    <path d="M37 173q55-14 123 0t123 0v12H37z" fill="currentColor" opacity=".08" />
-    <g>{art}</g><g fill="currentColor" opacity=".55"><circle cx="75" cy="73" r="2"/><circle cx="249" cy="85" r="1.7"/><circle cx="234" cy="48" r="1.2"/><circle cx="92" cy="139" r="1.5"/></g>
+  const skyId = `scene-sky-${instanceId}`
+  const lightId = `scene-light-${instanceId}`
+  if (small) return <svg className="scene-illustration scene-small" viewBox="0 0 320 220" role="img" aria-label={description} style={{ color: chapter?.accent ?? '#efa86b' }}>
+    <defs><radialGradient id={lightId}><stop stopColor="currentColor" stopOpacity=".28"/><stop offset="1" stopColor="currentColor" stopOpacity="0"/></radialGradient></defs>
+    <ellipse cx="160" cy="169" rx="120" ry="56" fill={`url(#${lightId})`} /><path d="M37 173q55-14 123 0t123 0v12H37z" fill="currentColor" opacity=".08" /><g>{art}</g>
+    <g fill="currentColor" opacity=".55"><circle cx="75" cy="73" r="2"/><circle cx="249" cy="85" r="1.7"/><circle cx="234" cy="48" r="1.2"/><circle cx="92" cy="139" r="1.5"/></g>
+  </svg>
+  return <svg className="scene-illustration scene-story" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label={description} style={{ color: chapter?.accent ?? '#efa86b' }}>
+    <defs>
+      <linearGradient id={skyId} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#173748"/><stop offset=".58" stopColor="#0c2637"/><stop offset="1" stopColor="#091925"/></linearGradient>
+      <radialGradient id={lightId}><stop stopColor="currentColor" stopOpacity=".42"/><stop offset="1" stopColor="currentColor" stopOpacity="0"/></radialGradient>
+    </defs>
+    <rect width="640" height="360" fill={`url(#${skyId})`} />
+    <circle className="scene-light-pulse" cx="492" cy="80" r="122" fill={`url(#${lightId})`} />
+    <g className="scene-stars" fill="#f9e3bd"><circle cx="84" cy="52" r="2.4"/><circle cx="159" cy="93" r="1.8"/><circle cx="257" cy="40" r="2"/><circle cx="555" cy="49" r="2.5"/><circle cx="582" cy="133" r="1.8"/><circle cx="62" cy="131" r="1.6"/></g>
+    <path d="M0 230q84-66 170-12t177-12q103-76 293 6v148H0z" fill="#122d3d" />
+    <g className="scene-city" fill="#1a3948" stroke="#82999b" strokeOpacity=".25" strokeWidth="3">
+      <path d="M0 239v-77l32-27 34 27v77zm72 0v-50l43-31 43 31v50zm391 0v-48l41-34 41 34v48zm99 0v-76l36-30 35 30v76z" />
+      <path d="M12 190h12m26 0h8m29 21h11m28 0h12m364 0h11m29 0h11m27-20h14m25 0h14" stroke="#eac889" strokeOpacity=".55" strokeWidth="5" />
+    </g>
+    <DistrictBackdrop id={id} />
+    <path d="M0 289q156-24 320 0t320 0v71H0z" fill="#0b1e2a" fillOpacity=".76" />
+    <path d="M22 316q145-25 292 0t304 0" fill="none" stroke="currentColor" strokeOpacity=".2" strokeWidth="4" />
+    <ellipse cx="320" cy="277" rx="206" ry="73" fill={`url(#${lightId})`} />
+    {id === 'dignity' ? <DignityScene /> : <g transform="translate(32 -20) scale(1.8)"><g>{art}</g></g>}
+    <g className="scene-sparkles" fill="#ffe0a2"><circle className="scene-spark scene-spark-one" cx="205" cy="159" r="3"/><circle className="scene-spark scene-spark-two" cx="459" cy="137" r="2.5"/><circle cx="326" cy="75" r="2"/></g>
+    <path d="M0 348q153-22 320 0t320 0" fill="none" stroke="#fff0c3" strokeOpacity=".12" strokeWidth="3" />
   </svg>
 }
 
