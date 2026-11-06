@@ -33,6 +33,8 @@ export type Chapter = {
   summary: string
   story: string
   meaning: string
+  realLifeExample: string
+  relatedMediaIds?: string[]
   challenge: string
   interaction: Interaction
 }

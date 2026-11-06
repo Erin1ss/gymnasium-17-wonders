@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useId, useState } from 'react'
+import { type CSSProperties, useEffect, useId, useRef, useState } from 'react'
 import { chapters } from './content/chapters'
 import { mediaCatalog } from './content/media'
 import type { Chapter, MatchingInteraction, OrderedInteraction } from './content/types'
@@ -24,9 +24,12 @@ function App() {
   const [complete, setComplete] = useState<string[]>(readProgress)
   const [selected, setSelected] = useState<Chapter>(() => chapters.find((chapter) => !complete.includes(chapter.id)) ?? chapters[0])
   const [motion, setMotion] = useState(() => localStorage.getItem(MOTION_KEY) !== 'off')
+  const [musicOn, setMusicOn] = useState(false)
   const [journalOpen, setJournalOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [notice, setNotice] = useState('')
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const musicTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash())
@@ -43,6 +46,10 @@ function App() {
     const timer = window.setTimeout(() => setNotice(''), 3800)
     return () => window.clearTimeout(timer)
   }, [notice])
+  useEffect(() => () => {
+    if (musicTimerRef.current !== null) window.clearInterval(musicTimerRef.current)
+    void audioContextRef.current?.close()
+  }, [])
 
   const current = route.page === 'chapter' ? chapters.find((item) => item.id === route.id) : undefined
   const count = complete.length
@@ -56,6 +63,42 @@ function App() {
     if (!count) { go('/map'); return }
     const nextChapter = chapters.find((chapter) => !complete.includes(chapter.id))
     go(nextChapter ? `/chapter/${nextChapter.id}` : '/finale')
+  }
+  const toggleMusic = async () => {
+    if (musicOn) {
+      if (musicTimerRef.current !== null) window.clearInterval(musicTimerRef.current)
+      musicTimerRef.current = null
+      await audioContextRef.current?.suspend()
+      setMusicOn(false)
+      return
+    }
+    if (!window.AudioContext) { setNotice('В этом браузере не поддерживается фоновая музыка.'); return }
+    try {
+      const context = audioContextRef.current ?? new AudioContext()
+      audioContextRef.current = context
+      await context.resume()
+      const melody = [392, 523.25, 659.25, 587.33, 440, 523.25, 392, 329.63]
+      let note = 0
+      const playChime = () => {
+        if (context.state !== 'running') return
+        const now = context.currentTime
+        const oscillator = context.createOscillator()
+        const envelope = context.createGain()
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(melody[note % melody.length], now)
+        envelope.gain.setValueAtTime(.0001, now)
+        envelope.gain.exponentialRampToValueAtTime(.018, now + .08)
+        envelope.gain.exponentialRampToValueAtTime(.0001, now + .72)
+        oscillator.connect(envelope)
+        envelope.connect(context.destination)
+        oscillator.start(now)
+        oscillator.stop(now + .74)
+        note += 1
+      }
+      playChime()
+      musicTimerRef.current = window.setInterval(playChime, 780)
+      setMusicOn(true)
+    } catch { setNotice('Не получилось включить музыку в этом браузере.') }
   }
   const share = async () => {
     const url = window.location.href.split('#')[0]
@@ -83,8 +126,8 @@ function App() {
           <a aria-current={route.page === 'gallery' ? 'page' : undefined} href="#/gallery">Фото класса</a>
         </nav>
         <div className="header-tools">
-          <button className="progress-chip" onClick={() => setJournalOpen(true)} aria-label={`Открыть журнал путешествия: ${count} из 17 чудес пройдено`}>
-            <span className="progress-number">{count}<small> / 17</small></span><span className="progress-label">пройдено</span>
+          <button className="progress-chip" onClick={() => setJournalOpen(true)} aria-label={`Открыть коллекцию: собрано ${count} из 17 символов`}>
+            <span className="progress-number">{count}<small> / 17</small></span><span className="progress-label">символов</span>
             <span className="progress-track"><i style={{ width: `${(count / 17) * 100}%` }} /></span>
           </button>
         </div>
@@ -106,6 +149,7 @@ function App() {
         <button className="text-button" onClick={() => setMotion((value) => !value)} aria-pressed={!motion}>
           {motion ? 'Отключить анимацию' : 'Включить анимацию'}
         </button>
+        <button className="text-button sound-toggle" onClick={toggleMusic} aria-pressed={musicOn}>{musicOn ? 'Выключить музыку' : 'Включить музыку'}</button>
         <button className="text-button" onClick={share}>Поделиться ссылкой</button>
       </footer>
 
@@ -126,7 +170,7 @@ function Intro({ onStart, progress, nextChapter }: { onStart: () => void; progre
       <p className="eyebrow">Интерактивная сказка · Казань</p>
       <h1>Гимназия 122 <em>— город 17 чудес</em></h1>
       <p className="project-motto">Мечтай! Действуй! Россия начинается с нас</p>
-      <p className="intro-text">Город потерял семнадцать огней. Пройди истории и помоги вернуть им свет.</p>
+      <p className="intro-text">Однажды гимназия стала волшебным городом, и 17 чудес начали гаснуть. Помоги 9А вернуть им свет своими решениями.</p>
       <div className="intro-actions"><button className="button button-primary" onClick={onStart}>{progress === 0 ? 'Начать путешествие' : progress === 17 ? 'Посмотреть финал' : `Продолжить · ${nextChapter ?? 'следующая глава'}`} <span aria-hidden="true">→</span></button></div>
     </div>
     <div className="intro-city-name"><span>9А · гимназия № 122</span><span>Казань · 17 чудес</span></div>
@@ -152,18 +196,28 @@ function CityIllustration() {
   </svg>
 }
 
+function MapConstellation({ mobile = false }: { mobile?: boolean }) {
+  const route = places.map(([left, top], index) => `${index ? 'L' : 'M'} ${left} ${top}`).join(' ')
+  return <svg className={`map-constellation${mobile ? ' mobile-constellation' : ''}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <path className="constellation-halo" d={route} />
+    <path className="constellation-route" d={route} />
+    {places.map(([left, top], index) => <circle className={`constellation-star${index % 3 === 0 ? ' is-bright' : ''}`} key={`${left}-${top}`} cx={left} cy={top} r={index % 3 === 0 ? 1 : .62} style={{ '--star-delay': `${index * 90}ms` } as CSSProperties} />)}
+  </svg>
+}
+
 function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete: string[]; selected: Chapter; onSelect: (chapter: Chapter) => void; onOpen: (chapter: Chapter) => void; onFinish: () => void }) {
   const nextChapter = chapters.find((chapter) => !complete.includes(chapter.id))
   return <section className="page map-page">
-    <div className="page-heading map-heading"><div><p className="eyebrow">Пройдено {complete.length} из 17</p><h1>Город ждёт тебя</h1><p><span className="map-desktop-hint">Нажми на огонь или выбери историю ниже.</span><span className="map-mobile-hint">Начни с первого чуда или выбери историю ниже.</span></p></div>{nextChapter ? <button className="button button-primary map-start" onClick={() => onOpen(nextChapter)}>{complete.length ? 'Продолжить путь' : 'Начать с первого чуда'} <span aria-hidden="true">→</span></button> : <button className="button button-primary map-start" onClick={onFinish}>Посмотреть финал <span aria-hidden="true">→</span></button>}</div>
-    <div className="mobile-city-art"><img src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Волшебный город на берегу реки" /></div>
+    <div className="page-heading map-heading"><div><p className="eyebrow">Собрано {complete.length} из 17 символов</p><h1>Город ждёт тебя</h1><p><span className="map-desktop-hint">Нажми на огонь, чтобы открыть сказку.</span><span className="map-mobile-hint">Начни с первого чуда или выбери историю ниже.</span></p></div>{nextChapter ? <button className="button button-primary map-start" onClick={() => onOpen(nextChapter)}>{complete.length ? 'Продолжить путь' : 'Начать с первого чуда'} <span aria-hidden="true">→</span></button> : <button className="button button-primary map-start" onClick={onFinish}>Посмотреть финал <span aria-hidden="true">→</span></button>}</div>
+    <div className="mobile-city-art"><img src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Волшебный город на берегу реки" /><MapConstellation mobile /></div>
     <div className="map-layout">
       <div className="map-scroll" aria-label="Волшебная карта города с семнадцатью огнями">
         <div className="map-canvas">
           <img className="map-image" src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="" />
+          <MapConstellation />
           {chapters.map((chapter, index) => {
             const [left, top] = places[index]
-            return <button key={chapter.id} type="button" title={`${String(index + 1).padStart(2, '0')} · ${chapter.value}`} className={`map-marker ${selected.id === chapter.id ? 'is-selected' : ''} ${complete.includes(chapter.id) ? 'is-restored' : ''}`} style={{ left: `${left}%`, top: `${top}%`, '--accent': chapter.accent } as CSSProperties} onClick={() => onSelect(chapter)} aria-label={`${String(index + 1).padStart(2, '0')}. ${chapter.place}. Ценность: ${chapter.value}${complete.includes(chapter.id) ? '. Чудо восстановлено' : '. Ещё не восстановлено'}`} aria-pressed={selected.id === chapter.id}>
+            return <button key={chapter.id} type="button" title={`${String(index + 1).padStart(2, '0')} · ${chapter.value}`} className={`map-marker ${selected.id === chapter.id ? 'is-selected' : ''} ${complete.includes(chapter.id) ? 'is-restored' : ''}`} style={{ left: `${left}%`, top: `${top}%`, '--accent': chapter.accent, '--marker-delay': `${(index % 6) * 70}ms` } as CSSProperties} onMouseEnter={() => onSelect(chapter)} onFocus={() => onSelect(chapter)} onClick={() => onOpen(chapter)} aria-label={`Открыть чудо ${index + 1}: ${chapter.place}. Ценность: ${chapter.value}${complete.includes(chapter.id) ? '. Символ уже собран' : ''}`}>
               <span className="marker-number">{String(index + 1).padStart(2, '0')}</span><span className="marker-dot" aria-hidden="true" />
             </button>
           })}
@@ -176,7 +230,7 @@ function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete:
         <div className="preview-bottom"><span className={`status-dot ${complete.includes(selected.id) ? 'restored' : ''}`} />{complete.includes(selected.id) ? 'Пройдено' : 'Готово к началу'}<button className="button button-primary button-small" onClick={() => onOpen(selected)}>{complete.includes(selected.id) ? 'Повторить' : 'Открыть чудо'} <span aria-hidden="true">→</span></button></div>
       </aside>
     </div>
-    <section className="chapter-index" aria-labelledby="chapter-index-title"><div className="section-heading"><div><p className="eyebrow">Выбери маршрут</p><h2 id="chapter-index-title">Все 17 чудес</h2></div><p>Иллюстрация, название и один шаг до истории.</p></div><div className="chapter-card-grid">{chapters.map((chapter, index) => <button type="button" className="chapter-card" key={chapter.id} style={{ '--accent': chapter.accent } as CSSProperties} onClick={() => onOpen(chapter)} aria-label={`Открыть чудо ${index + 1}: ${chapter.value}, ${chapter.place}${complete.includes(chapter.id) ? ', пройдено' : ''}`}>
+    <section className="chapter-index" aria-labelledby="chapter-index-title"><div className="section-heading"><div><p className="eyebrow">Выбери маршрут</p><h2 id="chapter-index-title">Все 17 чудес</h2></div><p>Иллюстрация, название и один шаг до истории.</p></div><div className="chapter-card-grid">{chapters.map((chapter, index) => <button type="button" className="chapter-card" key={chapter.id} style={{ '--accent': chapter.accent, '--card-index': index } as CSSProperties} onClick={() => onOpen(chapter)} aria-label={`Открыть чудо ${index + 1}: ${chapter.value}, ${chapter.place}${complete.includes(chapter.id) ? ', символ собран' : ''}`}>
       <span className="chapter-card-art" aria-hidden="true"><StoryIllustration id={chapter.id} small /></span><span className="chapter-card-copy"><small>{String(index + 1).padStart(2, '0')} {complete.includes(chapter.id) ? '· пройдено' : '· чудо'}</small><b>{chapter.value}</b><span>{chapter.place}</span></span><span className="chapter-card-arrow" aria-hidden="true">→</span>
     </button>)}</div></section>
   </section>
@@ -189,8 +243,26 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { cha
   const [choice, setChoice] = useState<number | null>(null)
   const [order, setOrder] = useState<number[]>([])
   const [matches, setMatches] = useState<number[]>([])
+  const [narrationOn, setNarrationOn] = useState(false)
   const ordered = chapter.interaction.type === 'sequence' || chapter.interaction.type === 'assemble' ? chapter.interaction : null
   useEffect(() => { setFeedback(''); setPassed(complete); setChoice(null); setOrder([]); setMatches([]) }, [chapter.id, complete])
+  useEffect(() => () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel() }, [chapter.id])
+
+  const toggleNarration = () => {
+    if (!('speechSynthesis' in window)) return
+    if (narrationOn) { window.speechSynthesis.cancel(); setNarrationOn(false); return }
+    const voice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith('ru'))
+    const utterance = new SpeechSynthesisUtterance(chapter.story)
+    utterance.lang = 'ru-RU'
+    utterance.rate = .92
+    utterance.pitch = 1.04
+    if (voice) utterance.voice = voice
+    utterance.onend = () => setNarrationOn(false)
+    utterance.onerror = () => setNarrationOn(false)
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+    setNarrationOn(true)
+  }
 
   const checkChoice = () => {
     if (choice === null) { setFeedback('Сначала выбери ответ.'); return }
@@ -226,16 +298,32 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { cha
         <p className="eyebrow" style={{ color: chapter.accent }}>{chapter.place}</p><h1>{chapter.value}</h1>
         <div className="story-art" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} /></div>
         <p className="chapter-summary">{chapter.summary}</p>
+        <div className="chapter-reading"><blockquote className="value-note"><span>В этой главе</span>{chapter.meaning}</blockquote><div className="story-tools"><details className="story-details"><summary>Прочитать сказку целиком</summary><div className="story-copy"><p>{chapter.story}</p></div></details>{'speechSynthesis' in window && <button className="button button-outline narration-button" onClick={toggleNarration} aria-pressed={narrationOn}>{narrationOn ? 'Остановить озвучку' : 'Послушать сказку'} <span aria-hidden="true">{narrationOn ? 'Ⅱ' : '♪'}</span></button>}</div></div>
       </div>
       <aside className="challenge-panel">
         <p className="eyebrow">Твой ход</p><h2>{chapter.challenge}</h2>
         <InteractionBox chapter={chapter} choice={choice} setChoice={setChoice} order={order} matches={matches} setMatches={setMatches} moveItem={moveItem} onChoiceCheck={checkChoice} onOrderCheck={checkOrder} onMatchCheck={checkMatches} feedback={feedback} passed={passed} />
-        {passed && <p className="real-life-note"><span aria-hidden="true">✦</span> Чудо вернулось в город.</p>}
+        {passed && <p className="real-life-note"><span aria-hidden="true">✦</span> Символ собран. Примеры из жизни — ниже.</p>}
         <div className="chapter-nav"><button onClick={() => onChapter(prev.id)}><small>← предыдущая глава</small><b>{prev.value}</b></button><button onClick={() => onChapter(next.id)}><small>следующая глава →</small><b>{next.value}</b></button></div>
       </aside>
     </div>
-    <div className="chapter-reading"><blockquote className="value-note"><span>В этой главе</span>{chapter.meaning}</blockquote><details className="story-details"><summary>Прочитать сказку целиком</summary><div className="story-copy"><p>{chapter.story}</p></div></details></div>
+    {passed && <RealLifeConnection chapter={chapter} />}
     <a className="chapter-gallery-link" href="#/gallery">Посмотреть фотографии класса <span aria-hidden="true">→</span></a>
+  </section>
+}
+
+function RealLifeConnection({ chapter }: { chapter: Chapter }) {
+  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.src && chapter.relatedMediaIds?.includes(item.id))
+  return <section className="real-life-panel" aria-labelledby="real-life-title">
+    <div className="real-life-heading">
+      <div className="symbol-token" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} small /><span aria-hidden="true">✦</span></div>
+      <div><p className="eyebrow">Символ собран</p><h2 id="real-life-title">{chapter.value}</h2><p>Чудо возвращается в город.</p></div>
+    </div>
+    <div className="real-life-example"><p className="eyebrow">Как ценность проявляется в жизни</p><p>{chapter.realLifeExample}</p></div>
+    {photos.length > 0 ? <div className="real-life-photos"><p className="eyebrow">Публикации класса · 2025 год, 8А</p><div className="real-life-photo-grid">{photos.map((photo) => <article className="real-life-photo" key={photo.id}>
+      <img src={photo.src ?? undefined} alt={photo.alt} loading="lazy" />
+      <div><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">Публикация гимназии · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
+    </article>)}</div></div> : <div className="real-life-gallery-link"><p>Примеры выше — идеи для школьной жизни. В галерее собраны проверенные события 9А с подписями и источниками.</p><a className="text-link" href="#/gallery">Открыть фотогалерею класса <span aria-hidden="true">→</span></a></div>}
   </section>
 }
 
@@ -393,7 +481,7 @@ function StoryIllustration({ id, small = false }: { id: string; small?: boolean 
 function Gallery() {
   const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.id !== 'city-map')
   return <section className="page gallery-page"><div className="page-heading"><div><p className="eyebrow">Настоящие истории</p><h1>Чудеса класса</h1><p>Кадры из школьной жизни нынешнего 9А — в 2025 году это был 8А.</p></div></div>
-    <div className="gallery-photo-grid">{photos.map((photo, index) => <article className={`gallery-photo-card${index === 0 ? ' gallery-photo-featured' : ''}`} key={photo.id}>
+      <div className="gallery-photo-grid">{photos.map((photo, index) => <article className={`gallery-photo-card${index === 0 ? ' gallery-photo-featured' : ''}`} key={photo.id} style={{ '--card-index': index } as CSSProperties}>
       <div className="gallery-photo-frame"><img src={photo.src ?? undefined} alt={photo.alt} loading={index === 0 ? 'eager' : 'lazy'} /></div>
       <div className="gallery-photo-copy"><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">Пост гимназии · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
     </article>)}</div>
@@ -402,13 +490,13 @@ function Gallery() {
 
 function About() {
   return <section className="page about-page"><div className="page-heading"><div><p className="eyebrow">Идея и авторство</p><h1>О проекте</h1><p>Сказка, которая начинается со знакомой школьной двери и ведёт к реальным поступкам.</p></div></div>
-    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии.</p><p>Реальные школьные события нынешнего 9А показаны в галерее по публикациям гимназии за 2025 год, когда класс учился в 8А. Источники указаны рядом с фотографиями.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
-    <div className="contest-note"><span>85 × 60 см</span><p>Сайт дополняет школьную стенгазету. По условию конкурса для сдачи требуется отдельно подготовленная вручную горизонтальная работа на ватмане; цифровой макет — только образец для переноса идеи.</p><a className="text-link" href={`${import.meta.env.BASE_URL}poster-mockup.svg`} target="_blank" rel="noreferrer">Открыть макет ватмана <span aria-hidden="true">↗</span></a></div>
+    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии. ИИ помог создать сказочный мир и часть иллюстраций.</p><p>Реальные школьные события нынешнего 9А показаны в галерее по публикациям гимназии за 2025 год, когда класс учился в 8А. Источники указаны рядом с фотографиями.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
+    <div className="contest-note"><span>60 × 85 см</span><p>Для конкурса нужна отдельная горизонтальная стенгазета на ватмане: статьи, рисунки и оформление выполняются вручную, а электронная версия — фотография бумажной работы. Сайт — самостоятельное цифровое продолжение. Возможность использовать распечатанные иллюстрации согласуйте с организаторами.</p><a className="text-link" href={`${import.meta.env.BASE_URL}poster-mockup.svg`} target="_blank" rel="noreferrer">Открыть макет ватмана <span aria-hidden="true">↗</span></a></div>
   </section>
 }
 
 function Finale({ onAgain }: { onAgain: () => void }) {
-  return <section className="finale-page"><div className="finale-art"><CityIllustration /></div><div className="finale-copy"><div className="finale-star">✦</div><p className="eyebrow">Город снова светится</p><h1>Семнадцать огней.<br />Один общий свет.</h1><p>Карта больше не казалась картой. Она стала окном: в каждом его огне отражались не чудеса из сказки, а то, что можно сделать завтра — выслушать, построить, вспомнить, поддержать.</p><p>Наутро школа снова стала школой. Только на лестнице задержался медный ворон — ему хотелось дослушать историю до конца. Город остался на карте: его свет возвращается всякий раз, когда люди действуют вместе.</p><blockquote>Настоящее чудо — это поступок, который не проходит мимо.</blockquote><div className="intro-actions"><button className="button button-primary" onClick={onAgain}>Пройти заново <span aria-hidden="true">↺</span></button><a className="button button-quiet" href="#/gallery">Чудеса класса</a></div></div></section>
+  return <section className="finale-page"><div className="finale-art"><CityIllustration /></div><div className="finale-copy"><div className="finale-star">✦</div><p className="eyebrow">Город снова светится</p><h1>Семнадцать огней.<br />Один общий свет.</h1><p>Карта больше не казалась картой. Она стала окном: в каждом его огне отражались не чудеса из сказки, а то, что можно сделать завтра — выслушать, построить, вспомнить, поддержать.</p><p>Наутро школа снова стала школой. Только на лестнице задержался медный ворон — ему хотелось дослушать историю до конца. Город остался на карте: его свет возвращается всякий раз, когда люди действуют вместе.</p><blockquote>Настоящее чудо — это поступок, который не проходит мимо.</blockquote><div className="finale-collection" role="list" aria-label="Собраны все 17 символов">{chapters.map((chapter, index) => <span className="finale-token" role="listitem" key={chapter.id} title={chapter.value} aria-label={chapter.value} style={{ '--accent': chapter.accent, '--card-index': index } as CSSProperties}><StoryIllustration id={chapter.id} small /></span>)}</div><div className="intro-actions"><button className="button button-primary" onClick={onAgain}>Пройти заново <span aria-hidden="true">↺</span></button><a className="button button-quiet" href="#/gallery">Чудеса класса</a></div></div></section>
 }
 function FinaleLocked({ complete, onMap }: { complete: number; onMap: () => void }) { return <section className="finale-locked"><div className="lock-symbol">✧</div><h1>Финал ещё впереди</h1><p>Восстановлено {complete} из 17 чудес. Город пока ждёт огни, которые ещё не зажглись.</p><button className="button button-primary" onClick={onMap}>Вернуться к карте <span aria-hidden="true">→</span></button></section> }
 function EmptyRoute({ onMap }: { onMap: () => void }) { return <section className="finale-locked"><h1>Эта улица потерялась</h1><p>На карте нет такой главы. Давай вернёмся к знакомым дорогам.</p><button className="button button-primary" onClick={onMap}>Открыть карту</button></section> }
@@ -416,7 +504,7 @@ function EmptyRoute({ onMap }: { onMap: () => void }) { return <section classNam
 function Journal({ complete, motion, onMotion, onClose, onOpen, onReset }: { complete: string[]; motion: boolean; onMotion: () => void; onClose: () => void; onOpen: (id: string) => void; onReset: () => void }) {
   const [filter, setFilter] = useState<'all' | 'done'>('all')
   const visible = chapters.map((chapter, i) => ({ chapter, i })).filter(({ chapter }) => filter === 'all' || complete.includes(chapter.id))
-  return <div className="scrim" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><aside className="journal-panel" role="dialog" aria-modal="true" aria-labelledby="journal-title"><div className="dialog-heading"><div><p className="eyebrow">Путевой блокнот</p><h2 id="journal-title">Журнал путешественника</h2></div><button className="icon-button close-button" aria-label="Закрыть журнал" onClick={onClose}>×</button></div><div className="journal-progress"><b>{complete.length} / 17</b><span>огней возвращено</span><div className="progress-track"><i style={{ width: `${(complete.length / 17) * 100}%` }} /></div></div><div className="journal-tabs" role="tablist"><button role="tab" aria-selected={filter === 'all'} onClick={() => setFilter('all')}>Все главы</button><button role="tab" aria-selected={filter === 'done'} onClick={() => setFilter('done')}>Восстановленные</button></div><ol className="journal-list">{visible.map(({ chapter, i }) => <li key={chapter.id}><button onClick={() => onOpen(chapter.id)}><span className={`journal-number ${complete.includes(chapter.id) ? 'lit' : ''}`}>{String(i + 1).padStart(2, '0')}</span><span><b>{chapter.value}</b><small>{chapter.place}</small></span><i>{complete.includes(chapter.id) ? '✦' : '○'}</i></button></li>)}{filter === 'done' && !visible.length && <li className="journal-empty">Пока ни один огонь не вернулся. Начни с любой улицы.</li>}</ol><div className="journal-settings"><button className="text-button" onClick={onMotion}>{motion ? 'Отключить анимацию' : 'Включить анимацию'}</button><button className="text-button danger-text" onClick={onReset}>Сбросить прогресс</button></div></aside></div>
+  return <div className="scrim" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><aside className="journal-panel" role="dialog" aria-modal="true" aria-labelledby="journal-title"><div className="dialog-heading"><div><p className="eyebrow">Путевой блокнот</p><h2 id="journal-title">Коллекция путешественника</h2></div><button className="icon-button close-button" aria-label="Закрыть коллекцию" onClick={onClose}>×</button></div><div className="journal-progress"><b>{complete.length} / 17</b><span>символов собрано</span><div className="progress-track"><i style={{ width: `${(complete.length / 17) * 100}%` }} /></div></div><div className="journal-tabs" role="tablist"><button role="tab" aria-selected={filter === 'all'} onClick={() => setFilter('all')}>Все чудеса</button><button role="tab" aria-selected={filter === 'done'} onClick={() => setFilter('done')}>Собранные</button></div><ol className="journal-list">{visible.map(({ chapter, i }) => <li key={chapter.id}><button onClick={() => onOpen(chapter.id)}><span className={`journal-number ${complete.includes(chapter.id) ? 'lit has-symbol' : ''}`}>{complete.includes(chapter.id) ? <StoryIllustration id={chapter.id} small /> : String(i + 1).padStart(2, '0')}</span><span><b>{chapter.value}</b><small>{chapter.place}</small></span><i>{complete.includes(chapter.id) ? '✦' : '○'}</i></button></li>)}{filter === 'done' && !visible.length && <li className="journal-empty">Пока ни один символ не собран. Начни с любой улицы.</li>}</ol><div className="journal-settings"><button className="text-button" onClick={onMotion}>{motion ? 'Отключить анимацию' : 'Включить анимацию'}</button><button className="text-button danger-text" onClick={onReset}>Сбросить прогресс</button></div></aside></div>
 }
 function ConfirmDialog({ title, body, onCancel, onConfirm }: { title: string; body: string; onCancel: () => void; onConfirm: () => void }) { return <div className="scrim"><div className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body"><h2 id="confirm-title">{title}</h2><p id="confirm-body">{body}</p><div><button className="button button-quiet" onClick={onCancel}>Отмена</button><button className="button button-danger" onClick={onConfirm}>Сбросить</button></div></div></div> }
 
