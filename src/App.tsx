@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useState } from 'react'
 import { chapters } from './content/chapters'
+import { mediaCatalog } from './content/media'
 import type { Chapter, MatchingInteraction, OrderedInteraction } from './content/types'
 import { isCorrectInteraction } from './content/validation'
 import { MOTION_KEY, readProgress, STORE_KEY } from './content/progress'
@@ -234,7 +235,7 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { cha
         <div className="chapter-nav"><button onClick={() => onChapter(prev.id)}><small>← предыдущая глава</small><b>{prev.value}</b></button><button onClick={() => onChapter(next.id)}><small>следующая глава →</small><b>{next.value}</b></button></div>
       </aside>
     </div>
-    <section className="school-link"><div className="school-link-art" aria-hidden="true">✳</div><div><p className="eyebrow">Чудо в нашей жизни</p><h2>Истории класса — отдельный свет</h2><p>Сказочная сцена придумана для этого проекта. Фотографии и рассказы 9А появятся здесь только после того, как класс их предоставит и подтвердит разрешение на публикацию.</p></div><a className="text-link" href="#/gallery">К разделу класса <span aria-hidden="true">→</span></a></section>
+    <section className="school-link"><div className="school-link-art" aria-hidden="true">✳</div><div><p className="eyebrow">Чудо в нашей жизни</p><h2>Истории класса — отдельный свет</h2><p>В галерее — реальные события нынешнего 9А, когда класс был 8А. Подписи и ссылки ведут к публикациям гимназии.</p></div><a className="text-link" href="#/gallery">К разделу класса <span aria-hidden="true">→</span></a></section>
   </section>
 }
 
@@ -299,15 +300,18 @@ function StoryIllustration({ id, small = false }: { id: string; small?: boolean 
 }
 
 function Gallery() {
-  return <section className="page gallery-page"><div className="page-heading"><div><p className="eyebrow">Настоящие истории</p><h1>Чудеса класса</h1><p>Город стал сказочным, а снимки и рассказы останутся настоящими.</p></div></div>
-    <div className="gallery-feature"><div className="gallery-illustration"><CityIllustration /></div><div className="gallery-copy"><span className="gallery-star" aria-hidden="true">✳</span><h2>Здесь появится наш 9А</h2><p>Сейчас на этой странице только место для будущих материалов. Когда будут готовы фотографии, подписи и подтверждённые истории класса, они займут здесь свои страницы.</p><p className="gallery-note">До получения снимков мы не показываем придуманные портреты и события — только оставляем место для настоящих.</p><a className="text-link" href="#/about">О проекте и источниках <span aria-hidden="true">→</span></a></div></div>
-    <div className="gallery-empty-row"><div><span>01</span><b>Общий портрет 9А</b><small>Фотография класса с разрешением на публикацию</small></div><div><span>02</span><b>Совместное дело</b><small>Реальный проект, репетиция или командная работа</small></div><div><span>03</span><b>Один добрый поступок</b><small>Кадр помощи, заботы или поддержки — без постановки</small></div></div>
+  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.id !== 'city-map')
+  return <section className="page gallery-page"><div className="page-heading"><div><p className="eyebrow">Настоящие истории</p><h1>Чудеса класса</h1><p>Кадры из школьной жизни нынешнего 9А — в 2025 году это был 8А.</p></div></div>
+    <div className="gallery-photo-grid">{photos.map((photo, index) => <article className={`gallery-photo-card${index === 0 ? ' gallery-photo-featured' : ''}`} key={photo.id}>
+      <div className="gallery-photo-frame"><img src={photo.src ?? undefined} alt={photo.alt} loading={index === 0 ? 'eager' : 'lazy'} /></div>
+      <div className="gallery-photo-copy"><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">Пост гимназии · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
+    </article>)}</div>
   </section>
 }
 
 function About() {
   return <section className="page about-page"><div className="page-heading"><div><p className="eyebrow">Идея и авторство</p><h1>О проекте</h1><p>Сказка, которая начинается со знакомой школьной двери и ведёт к реальным поступкам.</p></div></div>
-    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии.</p><p>Реальные фотографии, достижения и рассказы 9А будут добавлены отдельно — только после предоставления материалов и подтверждения разрешений.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
+    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии.</p><p>Реальные школьные события нынешнего 9А показаны в галерее по публикациям гимназии за 2025 год, когда класс учился в 8А. Источники указаны рядом с фотографиями.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
     <div className="contest-note"><span>85 × 60 см</span><p>Сайт дополняет школьную стенгазету. По условию конкурса для сдачи требуется отдельно подготовленная вручную горизонтальная работа на ватмане; цифровой макет — только образец для переноса идеи.</p><a className="text-link" href={`${import.meta.env.BASE_URL}poster-mockup.svg`} target="_blank" rel="noreferrer">Открыть макет ватмана <span aria-hidden="true">↗</span></a></div>
   </section>
 }
