@@ -540,6 +540,20 @@ body { font-size: 17px; }
 .story-tools { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
 .narration-button { min-height: 50px; }
 .narration-button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold-pale); background: rgba(239, 182, 111, .1); }
+.narration-settings { flex: 1 1 100%; border-top: 1px solid var(--line); }
+.narration-settings summary { min-height: 44px; display: flex; align-items: center; gap: 12px; color: var(--gold-pale); cursor: pointer; }
+.narration-settings summary span { margin-left: auto; font-size: 20px; }
+.narration-settings-content { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: 12px 20px; padding: 4px 0 14px; }
+.narration-voice-control { grid-column: 1 / -1; display: grid; gap: 6px; color: var(--paper-muted); font-size: 13px; }
+.narration-voice-control select { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid rgba(233,217,185,.22); border-radius: 4px; color: var(--paper); background: #0b1e2b; }
+.narration-voice-note, .narration-settings-note { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.narration-rate-control { display: grid; gap: 6px; color: var(--paper-muted); font-size: 13px; }
+.narration-rate-control > span { display: flex; justify-content: space-between; gap: 12px; }
+.narration-rate-control b { font-weight: 500; }
+.narration-rate-control output { color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.narration-rate-control input { width: 100%; min-height: 28px; accent-color: var(--gold); }
+.narration-preview { align-self: end; justify-self: end; color: var(--gold-pale); font-size: 13px; }
+.narration-settings-note { grid-column: 1 / -1; }
 .real-life-panel { margin: 34px 0 18px; padding: clamp(18px, 3vw, 32px); display: grid; grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr); gap: 22px 30px; border: 1px solid rgba(239, 182, 111, .34); border-radius: 13px; background: radial-gradient(ellipse at 2% 0%, rgba(239, 182, 111, .13), transparent 42%), linear-gradient(145deg, #102a39, #0a1b29); animation: reward-reveal 600ms var(--ease-enter) both; }
 .real-life-heading { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(239, 182, 111, .2); }
 .real-life-heading .eyebrow { margin-bottom: 5px; }
@@ -596,6 +610,8 @@ body { font-size: 17px; }
   .real-life-photo-grid { grid-template-columns: 1fr; }
   .story-tools { align-items: stretch; flex-direction: column; }
   .narration-button { width: 100%; }
+  .narration-settings-content { grid-template-columns: 1fr; }
+  .narration-preview { justify-self: start; }
   .finale-collection { grid-template-columns: repeat(6, minmax(0, 1fr)); max-width: 330px; }
   .site-footer .sound-toggle { min-width: 120px; }
 }
