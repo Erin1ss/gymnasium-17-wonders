@@ -1,6 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <rect width="48" height="48" rx="24" fill="#0b1d2b"/>
-  <circle cx="24" cy="24" r="18" stroke="#efb66f" stroke-width="1.5"/>
-  <path d="M24 8v7m0 18v7M8 24h7m18 0h7M24 15l5 9-5 9-5-9 5-9Z" stroke="#f5d49d" stroke-width="1.5" stroke-linejoin="round"/>
-  <circle cx="24" cy="24" r="2" fill="#efb66f"/>
+  <defs>
+    <linearGradient id="night" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19394A" />
+      <stop offset="1" stop-color="#071522" />
+    </linearGradient>
+    <linearGradient id="light" x1="18" y1="8" x2="30" y2="23" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0C7" />
+      <stop offset="1" stop-color="#E8A95F" />
+    </linearGradient>
+    <radialGradient id="glow" cx="24" cy="14" r="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4C77F" stop-opacity=".45" />
+      <stop offset="1" stop-color="#F4C77F" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="23" fill="url(#night)" stroke="#DDAA68" stroke-width="1.4" />
+  <circle cx="24" cy="14" r="15" fill="url(#glow)" />
+  <path d="M8.5 37.5V23a15.5 15.5 0 0 1 31 0v14.5" fill="#102A39" stroke="#E2B879" stroke-width="1.5" />
+  <path d="M11 37.5V29l5.5-4.5L22 29v8.5H11Zm14 0V24l6-5 6 5v13.5H25Z" fill="#E3AE70" />
+  <path d="M22 37.5V25l2-4 2 4v12.5h-4Z" fill="#F4D7A1" />
+  <path d="M18 37.5v-4m12 4v-5m8 5v-4" stroke="#153044" stroke-width="1.8" stroke-linecap="round" />
+  <path d="m24 5 2.3 5.8 5.7 2.2-5.7 2.3L24 21l-2.3-5.7-5.7-2.3 5.7-2.2L24 5Z" fill="url(#light)" stroke="#FFF0C7" stroke-width=".7" stroke-linejoin="round" />
+  <circle cx="10.5" cy="17" r="1" fill="#FFE5B2" />
+  <circle cx="37.5" cy="15" r=".9" fill="#FFE5B2" />
+  <path d="M7.5 38h33" stroke="#F3D9A8" stroke-width="1.5" stroke-linecap="round" />
 </svg>

@@ -75,7 +75,7 @@ function App() {
     <div className={`app-shell${motion ? '' : ' motion-off'}`}>
       <header className="site-header">
         <a className="brand" href="#/intro" aria-label="Гимназия 122 — на главную">
-          <CompassMark />
+          <CityEmblem />
           <span><b>Гимназия 122</b><small>город 17 чудес</small></span>
         </a>
         <nav className="main-nav" aria-label="Основная навигация">
@@ -116,8 +116,8 @@ function App() {
   )
 }
 
-function CompassMark() {
-  return <svg className="compass-mark" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19"/><path d="M24 4v7M24 37v7M4 24h7M37 24h7M24 12l5 12-5 12-5-12z"/><circle cx="24" cy="24" r="2"/></svg>
+function CityEmblem() {
+  return <img className="city-emblem" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
 }
 function Intro({ onStart, progress, nextChapter }: { onStart: () => void; progress: number; nextChapter?: string }) {
   return <section className="intro-screen">
