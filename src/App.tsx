@@ -22,7 +22,7 @@ function routeFromHash(): Route {
 function App() {
   const [route, setRoute] = useState<Route>(routeFromHash)
   const [complete, setComplete] = useState<string[]>(readProgress)
-  const [selected, setSelected] = useState<Chapter>(chapters[0])
+  const [selected, setSelected] = useState<Chapter>(() => chapters.find((chapter) => !complete.includes(chapter.id)) ?? chapters[0])
   const [motion, setMotion] = useState(() => localStorage.getItem(MOTION_KEY) !== 'off')
   const [journalOpen, setJournalOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
@@ -47,7 +47,16 @@ function App() {
   const current = route.page === 'chapter' ? chapters.find((item) => item.id === route.id) : undefined
   const count = complete.length
   const go = (path: string) => { window.location.hash = path }
-  const markComplete = (id: string) => setComplete((old) => old.includes(id) ? old : [...old, id])
+  const markComplete = (id: string) => {
+    setComplete((old) => old.includes(id) ? old : [...old, id])
+    const index = chapters.findIndex((chapter) => chapter.id === id)
+    setSelected(chapters[(index + 1) % chapters.length])
+  }
+  const continueJourney = () => {
+    if (!count) { go('/map'); return }
+    const nextChapter = chapters.find((chapter) => !complete.includes(chapter.id))
+    go(nextChapter ? `/chapter/${nextChapter.id}` : '/finale')
+  }
   const share = async () => {
     const url = window.location.href.split('#')[0]
     try {
@@ -70,21 +79,19 @@ function App() {
           <span><b>Гимназия 122</b><small>город 17 чудес</small></span>
         </a>
         <nav className="main-nav" aria-label="Основная навигация">
-          <a aria-current={route.page === 'map' ? 'page' : undefined} href="#/map">Карта</a>
-          <a aria-current={route.page === 'gallery' ? 'page' : undefined} href="#/gallery">Чудеса класса</a>
-          <a aria-current={route.page === 'about' ? 'page' : undefined} href="#/about">О проекте</a>
+          <a aria-current={route.page === 'map' || route.page === 'chapter' ? 'page' : undefined} href="#/map">Путешествие</a>
+          <a aria-current={route.page === 'gallery' ? 'page' : undefined} href="#/gallery">Фото класса</a>
         </nav>
         <div className="header-tools">
-          <button className="icon-button journal-toggle" aria-label="Открыть журнал путешественника" onClick={() => setJournalOpen(true)}><JournalIcon /></button>
-          <button className="progress-chip" onClick={() => setJournalOpen(true)} aria-label={`Восстановлено чудес: ${count} из 17`}>
-            <span className="progress-number">{String(count).padStart(2, '0')}</span><span className="progress-label">из 17 чудес</span>
+          <button className="progress-chip" onClick={() => setJournalOpen(true)} aria-label={`Открыть журнал путешествия: ${count} из 17 чудес пройдено`}>
+            <span className="progress-number">{count}<small> / 17</small></span><span className="progress-label">пройдено</span>
             <span className="progress-track"><i style={{ width: `${(count / 17) * 100}%` }} /></span>
           </button>
         </div>
       </header>
 
       <main id="main-content">
-        {route.page === 'intro' && <Intro onStart={() => go('/map')} onAbout={() => go('/about')} />}
+        {route.page === 'intro' && <Intro onStart={continueJourney} progress={count} nextChapter={chapters.find((chapter) => !complete.includes(chapter.id))?.value} />}
         {route.page === 'map' && <MapPage complete={complete} selected={selected} onSelect={setSelected} onOpen={(chapter) => go(`/chapter/${chapter.id}`)} onFinish={() => go('/finale')} />}
         {route.page === 'chapter' && current && <ChapterPage chapter={current} complete={complete.includes(current.id)} onBack={() => go('/map')} onComplete={() => markComplete(current.id)} onChapter={(id) => go(`/chapter/${id}`)} />}
         {route.page === 'chapter' && !current && <EmptyRoute onMap={() => go('/map')} />}
@@ -95,6 +102,7 @@ function App() {
 
       <footer className="site-footer">
         <span>9А · гимназия № 122 имени Ж. А. Зайцевой · Казань</span>
+        <a className="text-button" href="#/about">О проекте</a>
         <button className="text-button" onClick={() => setMotion((value) => !value)} aria-pressed={!motion}>
           {motion ? 'Отключить анимацию' : 'Включить анимацию'}
         </button>
@@ -111,20 +119,17 @@ function App() {
 function CompassMark() {
   return <svg className="compass-mark" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19"/><path d="M24 4v7M24 37v7M4 24h7M37 24h7M24 12l5 12-5 12-5-12z"/><circle cx="24" cy="24" r="2"/></svg>
 }
-function JournalIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v13H7a2 2 0 0 1-2-2z"/><path d="M5 4.5v13A2.5 2.5 0 0 0 7.5 20M9 9h6M9 13h6"/></svg> }
-
-function Intro({ onStart, onAbout }: { onStart: () => void; onAbout: () => void }) {
+function Intro({ onStart, progress, nextChapter }: { onStart: () => void; progress: number; nextChapter?: string }) {
   return <section className="intro-screen">
-    <div className="intro-art"><img className="hero-image" src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Сказочный ночной город на берегу реки; его огни ждут, когда их вернут поступки людей" /></div>
+    <div className="intro-art"><img className="hero-image" src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="" /></div>
     <div className="intro-copy">
-      <div className="intro-flourish" aria-hidden="true">✳ <span>──────────</span></div>
+      <p className="eyebrow">Интерактивная сказка · Казань</p>
       <h1>Гимназия 122 <em>— город 17 чудес</em></h1>
       <p className="project-motto">Мечтай! Действуй! Россия начинается с нас</p>
-      <p className="intro-text">В одну осеннюю ночь знакомые школьные коридоры стали улицами волшебного города. Городской колокол замолчал, а семнадцать огней начали гаснуть. Чтобы вернуть их, придётся замечать друг друга и действовать.</p>
-      <div className="intro-actions"><button className="button button-primary" onClick={onStart}>Начать путешествие <span aria-hidden="true">↗</span></button><button className="button button-quiet" onClick={onAbout}>О проекте</button></div>
-      <div className="intro-caption"><span className="caption-line" />История о том, как мы бережём общее</div>
+      <p className="intro-text">Город потерял семнадцать огней. Пройди истории и помоги вернуть им свет.</p>
+      <div className="intro-actions"><button className="button button-primary" onClick={onStart}>{progress === 0 ? 'Начать путешествие' : progress === 17 ? 'Посмотреть финал' : `Продолжить · ${nextChapter ?? 'следующая глава'}`} <span aria-hidden="true">→</span></button></div>
     </div>
-    <div className="intro-city-name"><span>55°47′ N</span><span>Казань · город у большой реки</span></div>
+    <div className="intro-city-name"><span>9А · гимназия № 122</span><span>Казань · 17 чудес</span></div>
   </section>
 }
 
@@ -148,37 +153,32 @@ function CityIllustration() {
 }
 
 function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete: string[]; selected: Chapter; onSelect: (chapter: Chapter) => void; onOpen: (chapter: Chapter) => void; onFinish: () => void }) {
+  const nextChapter = chapters.find((chapter) => !complete.includes(chapter.id))
   return <section className="page map-page">
-    <div className="page-heading map-heading"><div><p className="eyebrow">Путешествие начинается</p><h1>Карта города</h1><p>Под башней ждёт молчащий городской колокол. Каждое решение возвращает ему один из семнадцати звуков.</p></div><button className="button button-outline" onClick={onFinish} disabled={complete.length < 17} title={complete.length < 17 ? 'Финал откроется после всех 17 чудес' : undefined}>Финал города <span aria-hidden="true">↗</span></button></div>
+    <div className="page-heading map-heading"><div><p className="eyebrow">Пройдено {complete.length} из 17</p><h1>Город ждёт тебя</h1><p><span className="map-desktop-hint">Нажми на огонь или выбери историю ниже.</span><span className="map-mobile-hint">Начни с первого чуда или выбери историю ниже.</span></p></div>{nextChapter ? <button className="button button-primary map-start" onClick={() => onOpen(nextChapter)}>{complete.length ? 'Продолжить путь' : 'Начать с первого чуда'} <span aria-hidden="true">→</span></button> : <button className="button button-primary map-start" onClick={onFinish}>Посмотреть финал <span aria-hidden="true">→</span></button>}</div>
+    <div className="mobile-city-art"><img src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="Волшебный город на берегу реки" /></div>
     <div className="map-layout">
-      <div className="map-scroll" tabIndex={0} aria-label="Волшебная карта; можно прокручивать по горизонтали на узком экране">
+      <div className="map-scroll" aria-label="Волшебная карта города с семнадцатью огнями">
         <div className="map-canvas">
-          <svg className="map-river" viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true">
-            <path className="land-shape" d="M0 82Q140 39 260 80T485 72Q650 20 790 75T1000 56V510Q850 550 704 505T490 522Q335 566 168 512T0 545Z"/>
-            <path className="river-shadow" d="M-15 333C110 190 160 489 294 352S440 210 543 323 695 458 795 313 922 181 1030 254"/>
-            <path className="river" d="M-15 321C110 178 160 477 294 340S440 198 543 311 695 446 795 301 922 169 1030 242"/>
-            <path className="river-shine" d="M-15 312C110 169 160 468 294 331S440 189 543 302 695 437 795 292 922 160 1030 233"/>
-            <path className="road" d="M40 173Q217 119 318 183T539 160Q699 119 955 167M62 465Q179 393 344 465T626 427Q831 386 963 464"/>
-            <g className="map-stars"><circle cx="133" cy="190" r="2"/><circle cx="857" cy="185" r="2"/><circle cx="720" cy="453" r="2"/><circle cx="485" cy="87" r="2"/></g>
-          </svg>
-          <div className="map-city-label label-north">СЕВЕРНЫЙ САД</div><div className="map-city-label label-center">СТАРЫЙ ГОРОД</div><div className="map-city-label label-south">НАБЕРЕЖНАЯ</div>
-          <span className="map-compass">N<span>✦</span></span>
+          <img className="map-image" src={`${import.meta.env.BASE_URL}images/city-map.webp`} alt="" />
           {chapters.map((chapter, index) => {
             const [left, top] = places[index]
-            return <button key={chapter.id} className={`map-marker ${selected.id === chapter.id ? 'is-selected' : ''} ${complete.includes(chapter.id) ? 'is-restored' : ''}`} style={{ left: `${left}%`, top: `${top}%`, '--accent': chapter.accent } as CSSProperties} onClick={() => onSelect(chapter)} onDoubleClick={() => onOpen(chapter)} aria-label={`${String(index + 1).padStart(2, '0')}. ${chapter.place}. Ценность: ${chapter.value}${complete.includes(chapter.id) ? '. Чудо восстановлено' : '. Ещё не восстановлено'}`} aria-pressed={selected.id === chapter.id}>
+            return <button key={chapter.id} type="button" title={`${String(index + 1).padStart(2, '0')} · ${chapter.value}`} className={`map-marker ${selected.id === chapter.id ? 'is-selected' : ''} ${complete.includes(chapter.id) ? 'is-restored' : ''}`} style={{ left: `${left}%`, top: `${top}%`, '--accent': chapter.accent } as CSSProperties} onClick={() => onSelect(chapter)} aria-label={`${String(index + 1).padStart(2, '0')}. ${chapter.place}. Ценность: ${chapter.value}${complete.includes(chapter.id) ? '. Чудо восстановлено' : '. Ещё не восстановлено'}`} aria-pressed={selected.id === chapter.id}>
               <span className="marker-number">{String(index + 1).padStart(2, '0')}</span><span className="marker-dot" aria-hidden="true" />
             </button>
           })}
-          <div className="map-legend"><span><i /> огонь ждёт</span><span><i className="legend-lit" /> огонь вернулся</span></div>
+          <div className="map-legend"><span><i /> впереди</span><span><i className="legend-lit" /> пройдено</span></div>
         </div>
       </div>
       <aside className="place-preview" aria-live="polite">
       <div className="preview-art" style={{ '--accent': selected.accent } as CSSProperties}><StoryIllustration id={selected.id} small /></div>
-        <p className="eyebrow">{String(chapters.indexOf(selected) + 1).padStart(2, '0')} · место на карте</p><h2>{selected.place}</h2><p className="preview-value">{selected.value}</p><p className="preview-summary">{selected.summary}</p>
-        <div className="preview-bottom"><span className={`status-dot ${complete.includes(selected.id) ? 'restored' : ''}`} />{complete.includes(selected.id) ? 'Чудо восстановлено' : 'Ждёт твоего решения'}<button className="button button-primary button-small" onClick={() => onOpen(selected)}>Открыть историю <span aria-hidden="true">→</span></button></div>
+        <p className="eyebrow">Чудо {String(chapters.indexOf(selected) + 1).padStart(2, '0')} из 17</p><h2>{selected.value}</h2><p className="preview-place">{selected.place}</p><p className="preview-summary">{selected.summary}</p>
+        <div className="preview-bottom"><span className={`status-dot ${complete.includes(selected.id) ? 'restored' : ''}`} />{complete.includes(selected.id) ? 'Пройдено' : 'Готово к началу'}<button className="button button-primary button-small" onClick={() => onOpen(selected)}>{complete.includes(selected.id) ? 'Повторить' : 'Открыть чудо'} <span aria-hidden="true">→</span></button></div>
       </aside>
     </div>
-    <details className="chapter-index"><summary>Список всех 17 глав</summary><ol>{chapters.map((chapter, i) => <li key={chapter.id}><button className="chapter-link" onClick={() => onOpen(chapter)}><span>{String(i + 1).padStart(2, '0')}</span><b>{chapter.value}</b><small>{chapter.place}</small><i>{complete.includes(chapter.id) ? 'светится' : 'на карте'}</i></button></li>)}</ol></details>
+    <section className="chapter-index" aria-labelledby="chapter-index-title"><div className="section-heading"><div><p className="eyebrow">Выбери маршрут</p><h2 id="chapter-index-title">Все 17 чудес</h2></div><p>Иллюстрация, название и один шаг до истории.</p></div><div className="chapter-card-grid">{chapters.map((chapter, index) => <button type="button" className="chapter-card" key={chapter.id} style={{ '--accent': chapter.accent } as CSSProperties} onClick={() => onOpen(chapter)} aria-label={`Открыть чудо ${index + 1}: ${chapter.value}, ${chapter.place}${complete.includes(chapter.id) ? ', пройдено' : ''}`}>
+      <span className="chapter-card-art" aria-hidden="true"><StoryIllustration id={chapter.id} small /></span><span className="chapter-card-copy"><small>{String(index + 1).padStart(2, '0')} {complete.includes(chapter.id) ? '· пройдено' : '· чудо'}</small><b>{chapter.value}</b><span>{chapter.place}</span></span><span className="chapter-card-arrow" aria-hidden="true">→</span>
+    </button>)}</div></section>
   </section>
 }
 
@@ -220,22 +220,22 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { cha
   const prev = chapters[(index - 1 + chapters.length) % chapters.length]
   const next = chapters[(index + 1) % chapters.length]
   return <section className="page chapter-page">
-    <div className="chapter-topline"><button className="back-link" onClick={onBack}><span aria-hidden="true">←</span> Карта города</button><span className="chapter-count">Чудо {String(index + 1).padStart(2, '0')} / 17</span></div>
+    <div className="chapter-topline"><button className="back-link" onClick={onBack}><span aria-hidden="true">←</span> Все чудеса</button><span className="chapter-count">{String(index + 1).padStart(2, '0')} из 17</span></div>
     <div className="chapter-grid">
       <div className="chapter-story">
         <p className="eyebrow" style={{ color: chapter.accent }}>{chapter.place}</p><h1>{chapter.value}</h1>
         <div className="story-art" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} /></div>
-        <div className="story-copy"><p>{chapter.story}</p></div>
-        <blockquote className="value-note"><span>В этой главе</span>{chapter.meaning}</blockquote>
+        <p className="chapter-summary">{chapter.summary}</p>
       </div>
       <aside className="challenge-panel">
-        <p className="eyebrow">ТВОЙ ВЫБОР</p><h2>{chapter.challenge}</h2>
+        <p className="eyebrow">Твой ход</p><h2>{chapter.challenge}</h2>
         <InteractionBox chapter={chapter} choice={choice} setChoice={setChoice} order={order} matches={matches} setMatches={setMatches} moveItem={moveItem} onChoiceCheck={checkChoice} onOrderCheck={checkOrder} onMatchCheck={checkMatches} feedback={feedback} passed={passed} />
-        {passed && <p className="real-life-note"><span aria-hidden="true">✦</span> Чудо зажглось и на карте города. В жизни оно тоже начинается с поступка — своего или общего.</p>}
+        {passed && <p className="real-life-note"><span aria-hidden="true">✦</span> Чудо вернулось в город.</p>}
         <div className="chapter-nav"><button onClick={() => onChapter(prev.id)}><small>← предыдущая глава</small><b>{prev.value}</b></button><button onClick={() => onChapter(next.id)}><small>следующая глава →</small><b>{next.value}</b></button></div>
       </aside>
     </div>
-    <section className="school-link"><div className="school-link-art" aria-hidden="true">✳</div><div><p className="eyebrow">Чудо в нашей жизни</p><h2>Истории класса — отдельный свет</h2><p>В галерее — реальные события нынешнего 9А, когда класс был 8А. Подписи и ссылки ведут к публикациям гимназии.</p></div><a className="text-link" href="#/gallery">К разделу класса <span aria-hidden="true">→</span></a></section>
+    <div className="chapter-reading"><blockquote className="value-note"><span>В этой главе</span>{chapter.meaning}</blockquote><details className="story-details"><summary>Прочитать сказку целиком</summary><div className="story-copy"><p>{chapter.story}</p></div></details></div>
+    <a className="chapter-gallery-link" href="#/gallery">Посмотреть фотографии класса <span aria-hidden="true">→</span></a>
   </section>
 }
 
