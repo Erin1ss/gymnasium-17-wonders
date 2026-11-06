@@ -6,30 +6,10 @@ import { isCorrectInteraction } from './content/validation'
 import { MOTION_KEY, readProgress, STORE_KEY } from './content/progress'
 
 type Route = { page: 'intro' | 'map' | 'gallery' | 'about' | 'finale' | 'chapter'; id?: string }
-const NARRATION_VOICE_KEY = 'gymnasium-17-wonders-narration-voice-v1'
-const NARRATION_RATE_KEY = 'gymnasium-17-wonders-narration-rate-v1'
 const places = [
   [6, 20], [18, 12], [30, 25], [42, 14], [54, 31], [67, 16], [82, 26], [91, 43], [77, 53],
   [62, 65], [47, 54], [34, 72], [19, 57], [8, 75], [26, 87], [54, 84], [78, 82],
 ]
-
-function rankRussianVoices(voices: SpeechSynthesisVoice[]) {
-  return voices.filter((voice) => voice.lang.toLowerCase().startsWith('ru')).sort((a, b) => {
-    const score = (voice: SpeechSynthesisVoice) => {
-      const name = voice.name.toLowerCase()
-      return (voice.lang.toLowerCase() === 'ru-ru' ? 20 : 0)
-        + (/natural|neural|premium|enhanced|online|google/i.test(name) ? 100 : 0)
-        + (/\birina\b/i.test(name) ? 35 : 0)
-        - (/compact|low quality/i.test(name) ? 40 : 0)
-    }
-    return score(b) - score(a)
-  })
-}
-
-function readNarrationRate() {
-  const saved = Number(localStorage.getItem(NARRATION_RATE_KEY))
-  return Number.isFinite(saved) && saved >= 0.75 && saved <= 1.1 ? saved : 0.9
-}
 
 function routeFromHash(): Route {
   const bits = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean)
@@ -156,7 +136,7 @@ function App() {
       <main id="main-content">
         {route.page === 'intro' && <Intro onStart={continueJourney} progress={count} nextChapter={chapters.find((chapter) => !complete.includes(chapter.id))?.value} />}
         {route.page === 'map' && <MapPage complete={complete} selected={selected} onSelect={setSelected} onOpen={(chapter) => go(`/chapter/${chapter.id}`)} onFinish={() => go('/finale')} />}
-        {route.page === 'chapter' && current && <ChapterPage chapter={current} complete={complete.includes(current.id)} onBack={() => go('/map')} onComplete={() => markComplete(current.id)} onChapter={(id) => go(`/chapter/${id}`)} />}
+        {route.page === 'chapter' && current && <ChapterPage chapter={current} complete={complete.includes(current.id)} onBack={() => go('/map')} onComplete={() => markComplete(current.id)} />}
         {route.page === 'chapter' && !current && <EmptyRoute onMap={() => go('/map')} />}
         {route.page === 'gallery' && <Gallery />}
         {route.page === 'about' && <About />}
@@ -261,56 +241,18 @@ function MapPage({ complete, selected, onSelect, onOpen, onFinish }: { complete:
   </section>
 }
 
-function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { chapter: Chapter; complete: boolean; onBack: () => void; onComplete: () => void; onChapter: (id: string) => void }) {
+function ChapterPage({ chapter, complete, onBack, onComplete }: { chapter: Chapter; complete: boolean; onBack: () => void; onComplete: () => void }) {
   const index = chapters.indexOf(chapter)
+  const [step, setStep] = useState<'story' | 'question'>(complete ? 'question' : 'story')
   const [feedback, setFeedback] = useState('')
   const [passed, setPassed] = useState(complete)
+  const [showExamples, setShowExamples] = useState(false)
   const [choice, setChoice] = useState<number | null>(null)
   const [order, setOrder] = useState<number[]>([])
   const [matches, setMatches] = useState<number[]>([])
-  const [narrationOn, setNarrationOn] = useState(false)
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem(NARRATION_VOICE_KEY) ?? 'auto')
-  const [narrationRate, setNarrationRate] = useState(readNarrationRate)
   const ordered = chapter.interaction.type === 'sequence' || chapter.interaction.type === 'assemble' ? chapter.interaction : null
-  useEffect(() => { setFeedback(''); setPassed(complete); setChoice(null); setOrder([]); setMatches([]) }, [chapter.id, complete])
-  useEffect(() => {
-    if (!('speechSynthesis' in window)) return
-    const updateVoices = () => setVoices(rankRussianVoices(window.speechSynthesis.getVoices()))
-    updateVoices()
-    window.speechSynthesis.addEventListener('voiceschanged', updateVoices)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', updateVoices)
-  }, [])
-  useEffect(() => {
-    setNarrationOn(false)
-    return () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel() }
-  }, [chapter.id])
-
-  const selectedVoice = voices.find((voice) => voice.voiceURI === voiceURI) ?? voices[0]
-  const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'ru-RU'
-    utterance.rate = narrationRate
-    utterance.pitch = 1
-    utterance.volume = .96
-    if (selectedVoice) utterance.voice = selectedVoice
-    utterance.onend = () => setNarrationOn(false)
-    utterance.onerror = () => setNarrationOn(false)
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(utterance)
-    setNarrationOn(true)
-  }
-
-  const toggleNarration = () => {
-    if (!('speechSynthesis' in window)) return
-    if (narrationOn) { window.speechSynthesis.cancel(); setNarrationOn(false); return }
-    speakText(`${chapter.place}… ${chapter.story}`)
-  }
-
-  const previewNarration = () => speakText('В городе чудес каждый добрый поступок возвращает свет.')
-  const chooseVoice = (value: string) => { setVoiceURI(value); localStorage.setItem(NARRATION_VOICE_KEY, value) }
-  const chooseRate = (value: string) => { const rate = Number(value); setNarrationRate(rate); localStorage.setItem(NARRATION_RATE_KEY, String(rate)) }
+  useEffect(() => { setFeedback(''); setPassed(complete); setChoice(null); setOrder([]); setMatches([]); setStep(complete ? 'question' : 'story'); setShowExamples(false) }, [chapter.id, complete])
+  const changeStep = (next: 'story' | 'question') => { setStep(next); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
   const checkChoice = () => {
     if (choice === null) { setFeedback('Сначала выбери ответ.'); return }
@@ -337,31 +279,23 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onChapter }: { cha
     ;[list[from], list[to]] = [list[to], list[from]]
     return list
   })
-  const prev = chapters[(index - 1 + chapters.length) % chapters.length]
-  const next = chapters[(index + 1) % chapters.length]
   return <section className="page chapter-page">
-    <div className="chapter-topline"><button className="back-link" onClick={onBack}><span aria-hidden="true">←</span> Все чудеса</button><span className="chapter-count">{String(index + 1).padStart(2, '0')} из 17</span></div>
-    <div className="chapter-grid">
-      <div className="chapter-story">
-        <p className="eyebrow" style={{ color: chapter.accent }}>{chapter.place}</p><h1>{chapter.value}</h1>
-        <div className="story-art" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} /></div>
-        <p className="chapter-summary">{chapter.summary}</p>
-        <div className="chapter-reading"><blockquote className="value-note"><span>В этой главе</span>{chapter.meaning}</blockquote><div className="story-tools"><details className="story-details"><summary>Прочитать сказку целиком</summary><div className="story-copy"><p>{chapter.story}</p></div></details>{'speechSynthesis' in window && <><button className="button button-outline narration-button" onClick={toggleNarration} aria-pressed={narrationOn}>{narrationOn ? 'Остановить озвучку' : 'Послушать сказку'} <span aria-hidden="true">{narrationOn ? 'Ⅱ' : '♪'}</span></button><details className="narration-settings"><summary>Настроить звучание <span aria-hidden="true">⌄</span></summary><div className="narration-settings-content">
-          {voices.length > 1 ? <label className="narration-voice-control"><span>Голос</span><select value={voices.some((voice) => voice.voiceURI === voiceURI) ? voiceURI : 'auto'} onChange={(event) => chooseVoice(event.target.value)}><option value="auto">Автовыбор · {voices[0].name}</option>{voices.map((voice) => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} · {voice.lang}</option>)}</select></label> : <p className="narration-voice-note">{voices.length === 1 ? `Русский голос: ${voices[0].name}.` : 'Используется русский голос, доступный в браузере.'}</p>}
-          <label className="narration-rate-control"><span><b>Темп речи</b><output>{narrationRate.toFixed(2).replace('.', ',')}×</output></span><input type="range" min="0.75" max="1.1" step="0.05" value={narrationRate} onChange={(event) => chooseRate(event.target.value)} /></label>
-          <button className="text-button narration-preview" onClick={previewNarration}>Послушать пример <span aria-hidden="true">♪</span></button>
-          <p className="narration-settings-note">Автовыбор предпочитает более естественные русские голоса. Настройка сохраняется на этом устройстве.</p>
-        </div></details></>}</div></div>
+    <div className="chapter-topline"><button className="back-link" onClick={step === 'story' ? onBack : () => changeStep('story')}><span aria-hidden="true">←</span> {step === 'story' ? 'На карту' : 'К сказке'}</button><span className="chapter-count">Чудо {String(index + 1).padStart(2, '0')} из 17 · {step === 'story' ? 'история' : 'вопрос'}</span></div>
+    {step === 'story' ? <div className="chapter-focus story-step">
+      <header className="chapter-focus-heading"><p className="eyebrow" style={{ color: chapter.accent }}>{chapter.place}</p><h1>{chapter.value}</h1></header>
+      <div className="story-art" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} /></div>
+      <p className="chapter-summary">{chapter.summary}</p>
+      <details className="story-details"><summary>Прочитать сказку целиком</summary><div className="story-copy"><p>{chapter.story}</p><blockquote className="value-note"><span>Смысл ценности</span>{chapter.meaning}</blockquote></div></details>
+      <button className="button button-primary story-continue" onClick={() => changeStep('question')}>К заданию <span aria-hidden="true">→</span></button>
+    </div> : <section className="question-focus" aria-labelledby="chapter-question-title">
+      <p className="eyebrow" style={{ color: chapter.accent }}>{chapter.value} · ситуация</p>
+      <h1 id="chapter-question-title">{chapter.challenge}</h1>
+      <div className="question-answer-card">
+        {passed ? <p className="question-solved" role="status"><span aria-hidden="true">✦</span> Ответ принят. Чудо восстановлено.</p> : <InteractionBox chapter={chapter} choice={choice} setChoice={setChoice} order={order} matches={matches} setMatches={setMatches} moveItem={moveItem} onChoiceCheck={checkChoice} onOrderCheck={checkOrder} onMatchCheck={checkMatches} feedback={feedback} passed={false} />}
       </div>
-      <aside className="challenge-panel">
-        <p className="eyebrow">Твой ход</p><h2>{chapter.challenge}</h2>
-        <InteractionBox chapter={chapter} choice={choice} setChoice={setChoice} order={order} matches={matches} setMatches={setMatches} moveItem={moveItem} onChoiceCheck={checkChoice} onOrderCheck={checkOrder} onMatchCheck={checkMatches} feedback={feedback} passed={passed} />
-        {passed && <p className="real-life-note"><span aria-hidden="true">✦</span> Символ собран. Примеры из жизни — ниже.</p>}
-        <div className="chapter-nav"><button onClick={() => onChapter(prev.id)}><small>← предыдущая глава</small><b>{prev.value}</b></button><button onClick={() => onChapter(next.id)}><small>следующая глава →</small><b>{next.value}</b></button></div>
-      </aside>
-    </div>
-    {passed && <RealLifeConnection chapter={chapter} />}
-    <a className="chapter-gallery-link" href="#/gallery">Посмотреть фотографии класса <span aria-hidden="true">→</span></a>
+      {passed && <div className="real-life-reveal"><p>Чудо восстановлено. Посмотри, как эта ценность проявляется в жизни класса.</p><button className="button button-outline" aria-expanded={showExamples} onClick={() => setShowExamples((value) => !value)}>{showExamples ? 'Скрыть примеры' : 'Посмотреть примеры из жизни'} <span aria-hidden="true">{showExamples ? '↑' : '↓'}</span></button></div>}
+      {passed && showExamples && <RealLifeConnection chapter={chapter} />}
+    </section>}
   </section>
 }
 
