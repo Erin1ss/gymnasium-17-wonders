@@ -304,17 +304,17 @@ function ChapterPage({ chapter, complete, onBack, onComplete, onNext, nextChapte
 }
 
 function RealLifeConnection({ chapter }: { chapter: Chapter }) {
-  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.src && chapter.relatedMediaIds?.includes(item.id))
+  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.src && chapter.relatedMediaIds?.includes(item.id)).sort((a, b) => (b.dateISO ?? '').localeCompare(a.dateISO ?? ''))
   return <section className="real-life-panel" aria-labelledby="real-life-title">
     <div className="real-life-heading">
       <div className="symbol-token" style={{ '--accent': chapter.accent } as CSSProperties}><StoryIllustration id={chapter.id} small /><span aria-hidden="true">✦</span></div>
       <div><p className="eyebrow">Символ собран</p><h2 id="real-life-title">{chapter.value}</h2><p>Чудо возвращается в город.</p></div>
     </div>
     <div className="real-life-example"><p className="eyebrow">Как ценность проявляется в жизни</p><p>{chapter.realLifeExample}</p></div>
-    {photos.length > 0 ? <div className="real-life-photos"><p className="eyebrow">Публикации класса · 2025 год, 8А</p><div className="real-life-photo-grid">{photos.map((photo) => <article className="real-life-photo" key={photo.id}>
+    {photos.length > 0 ? <div className="real-life-photos"><p className="eyebrow">Фото из жизни класса и гимназии</p><div className="real-life-photo-grid">{photos.map((photo) => <article className="real-life-photo" key={photo.id}>
       <img src={photo.src ?? undefined} alt={photo.alt} loading="lazy" />
-      <div><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">Публикация гимназии · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
-    </article>)}</div></div> : <div className="real-life-gallery-link"><p>Примеры выше — идеи для школьной жизни. В галерее собраны проверенные события 9А с подписями и источниками.</p><a className="text-link" href="#/gallery">Открыть фотогалерею класса <span aria-hidden="true">→</span></a></div>}
+      <div><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">{photo.sourceLabel ?? 'Публикация гимназии'} · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
+    </article>)}</div></div> : <div className="real-life-gallery-link"><p>Примеры выше — идеи для школьной жизни. В галерее — публикации о школьных событиях 8А и 9А с подписями и источниками.</p><a className="text-link" href="#/gallery">Открыть фотогалерею класса <span aria-hidden="true">→</span></a></div>}
   </section>
 }
 
@@ -475,18 +475,18 @@ function StoryIllustration({ id, small = false }: { id: string; small?: boolean 
 }
 
 function Gallery() {
-  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.id !== 'city-map')
-  return <section className="page gallery-page"><div className="page-heading"><div><p className="eyebrow">Настоящие истории</p><h1>Чудеса класса</h1><p>Кадры из школьной жизни нынешнего 9А — в 2025 году это был 8А.</p></div></div>
+  const photos = mediaCatalog.filter((item) => item.status === 'approved' && item.id !== 'city-map').sort((a, b) => (b.dateISO ?? '').localeCompare(a.dateISO ?? ''))
+  return <section className="page gallery-page"><div className="page-heading"><div><p className="eyebrow">Настоящие истории</p><h1>Чудеса класса</h1><p>Публикации гимназии: школьная жизнь 8А в 2025/26 году и события с участием 9А в 2026-м.</p></div></div>
       <div className="gallery-photo-grid">{photos.map((photo, index) => <article className={`gallery-photo-card${index === 0 ? ' gallery-photo-featured' : ''}`} key={photo.id} style={{ '--card-index': index } as CSSProperties}>
       <div className="gallery-photo-frame"><img src={photo.src ?? undefined} alt={photo.alt} loading={index === 0 ? 'eager' : 'lazy'} /></div>
-      <div className="gallery-photo-copy"><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">Пост гимназии · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
+      <div className="gallery-photo-copy"><p>{photo.caption}</p><a href={photo.sourceUrl} target="_blank" rel="noreferrer">{photo.sourceLabel ?? 'Пост гимназии'} · {photo.sourceDate} <span aria-hidden="true">↗</span></a></div>
     </article>)}</div>
   </section>
 }
 
 function About() {
   return <section className="page about-page"><div className="page-heading"><div><p className="eyebrow">Идея и авторство</p><h1>О проекте</h1><p>Сказка, которая начинается со знакомой школьной двери и ведёт к реальным поступкам.</p></div></div>
-    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии. ИИ помог создать сказочный мир и часть иллюстраций.</p><p>Реальные школьные события нынешнего 9А показаны в галерее по публикациям гимназии за 2025 год, когда класс учился в 8А. Источники указаны рядом с фотографиями.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
+    <div className="about-layout"><article className="about-letter"><p className="drop-cap">Однажды школа № 122 стала городом, где каждый огонь связан с ценностью, названной в Указе Президента России № 809. Когда слова перестают переходить в действия, город теряет свет. Герои идут по разным улицам и учатся принимать решения — не заучивать правильные ответы.</p><p>Это художественная история, созданная для проекта «Гимназия 122 — город 17 чудес». Мая и медный ворон Тюк — вымышленные персонажи. Сюжет и игровые ситуации не описывают реальные события и учеников гимназии. ИИ помог создать сказочный мир и часть иллюстраций.</p><p>В галерее собраны публикации гимназии о школьной жизни 8А в 2025/26 учебном году (нынешний 9А) и события с участием 9А в 2026 году. Даты и источники указаны рядом с фотографиями.</p><p>Исполнитель: ученики 9А класса гимназии № 122 имени Ж. А. Зайцевой, Казань.</p><blockquote>«Мечтай! Действуй! Россия начинается с нас»</blockquote></article><aside className="source-panel"><p className="eyebrow">Нормативный источник</p><h2>17 ценностей</h2><p>Формулировки приведены по пункту 5 Основ государственной политики по сохранению и укреплению традиционных российских духовно-нравственных ценностей.</p><a href="https://www.consultant.ru/document/cons_doc_LAW_430906/" target="_blank" rel="noreferrer">Указ Президента РФ от 09.11.2022 № 809 <span aria-hidden="true">↗</span></a><p className="source-small">Сказка — художественный вымысел; нормативные сведения и реальные материалы разделены.</p></aside></div>
     <div className="contest-note"><span>60 × 85 см</span><p>Для конкурса нужна отдельная горизонтальная стенгазета на ватмане: статьи, рисунки и оформление выполняются вручную, а электронная версия — фотография бумажной работы. Сайт — самостоятельное цифровое продолжение. Возможность использовать распечатанные иллюстрации согласуйте с организаторами.</p><a className="text-link" href={`${import.meta.env.BASE_URL}poster-mockup.svg`} target="_blank" rel="noreferrer">Открыть макет ватмана <span aria-hidden="true">↗</span></a></div>
   </section>
 }
